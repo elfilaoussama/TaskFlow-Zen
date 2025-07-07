@@ -34,7 +34,7 @@ export function Dashboard() {
     ].filter(d => d.value > 0);
   }, [stats]);
 
-  if (isLoading) {
+  if (isLoading || !isClient) {
     return (
         <div className="px-4 space-y-4">
             <div className="grid grid-cols-3 gap-2 text-center">
@@ -64,7 +64,6 @@ export function Dashboard() {
             </div>
         </div>
         <div className="h-28">
-            {isClient && (
               <ResponsiveContainer width="100%" height="100%">
                   {stats.totalTasks > 0 ? (
                       <PieChart>
@@ -100,7 +99,6 @@ export function Dashboard() {
                       </div>
                   )}
               </ResponsiveContainer>
-            )}
         </div>
     </div>
   );
