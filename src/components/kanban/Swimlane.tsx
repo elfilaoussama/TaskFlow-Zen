@@ -20,9 +20,15 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [timeText, setTimeText] = useState('');
   const playSound = useSound();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (boardType !== 'daily') return;
+    setIsClient(true);
+  }, []);
+
+
+  useEffect(() => {
+    if (boardType !== 'daily' || !isClient) return;
 
     const calculateTimeText = () => {
         const now = new Date();
@@ -55,7 +61,7 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
     const interval = setInterval(() => setTimeText(calculateTimeText()), 60000); // update every minute
 
     return () => clearInterval(interval);
-}, [id, settings.swimlaneTimes, boardType]);
+}, [id, settings.swimlaneTimes, boardType, isClient]);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -89,7 +95,7 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-baseline gap-2">
           <h2 className="text-lg font-semibold font-headline text-foreground">{title}</h2>
-          {boardType === 'daily' && timeText && <span className="text-xs text-muted-foreground">{timeText}</span>}
+          {boardType === 'daily' && isClient && timeText && <span className="text-xs text-muted-foreground">{timeText}</span>}
         </div>
         <span className="text-sm font-medium text-muted-foreground bg-background px-2 py-1 rounded-full">{tasks.length}</span>
       </div>
