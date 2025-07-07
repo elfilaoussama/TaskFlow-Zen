@@ -209,25 +209,29 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
               <FormField control={form.control} name="categoryId" render={({ field }) => ( <FormItem> <FormLabel>Category</FormLabel> <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a category" /> </SelectTrigger> </FormControl> <SelectContent> {settings.categories.map(cat => ( <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
               <FormField control={form.control} name="deadline" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Deadline</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant="outline" className={cn( 'w-full justify-start text-left font-normal', !field.value && 'text-muted-foreground' )}> <div className="flex items-center justify-between w-full"> <span>{field.value ? format(field.value, 'PPP') : 'Pick a date'}</span> <CalendarIcon className="h-4 w-4 opacity-50" /> </div> </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0" align="start"> <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date(new Date().setDate(new Date().getDate() -1))} initialFocus /> </PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
             </div>
-            <FormField
-              control={form.control}
-              name="duration"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estimated Duration (minutes)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="e.g., 60"
-                      value={field.value ?? ''}
-                      onChange={e => field.onChange(e.target.valueAsNumber || undefined)}
+            
+            <FormField 
+              control={form.control} 
+              name="duration" 
+              render={({ field }) => ( 
+                <FormItem> 
+                  <FormLabel>Estimated Duration (minutes)</FormLabel> 
+                  <FormControl> 
+                    <Input 
+                      type="number" 
+                      placeholder="e.g., 60" 
+                      value={field.value ?? ''} 
+                      onChange={e => {
+                        const value = e.target.valueAsNumber;
+                        field.onChange(isNaN(value) ? undefined : value);
+                      }}
                       name={field.name}
                       onBlur={field.onBlur}
                       ref={field.ref}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                    /> 
+                  </FormControl> 
+                  <FormMessage /> 
+                </FormItem> 
               )}
             />
 
