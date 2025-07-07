@@ -57,8 +57,8 @@ const taskSchema = z.object({
     impact: z.coerce.number().min(1).max(10),
   }),
   duration: z.preprocess(
-    (val) => (val === "" || val === null ? undefined : val),
-    z.coerce.number().min(0, "Duration cannot be negative.").optional()
+    (val) => (val === "" || val === null || val === undefined ? undefined : val),
+    z.coerce.number().int().min(0, "Duration must be positive.").optional()
   ),
   attachments: z.array(attachmentSchema).optional(),
 });
@@ -196,7 +196,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
             <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <FormLabel>Description</FormLabel> <FormControl> <Textarea placeholder="Add more details about the task" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="categoryId" render={({ field }) => ( <FormItem> <FormLabel>Category</FormLabel> <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a category" /> </SelectTrigger> </FormControl> <SelectContent> {settings.categories.map(cat => ( <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
-              <FormField control={form.control} name="deadline" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Deadline</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant="outline" className={cn( 'w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground' )}> {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>} <CalendarIcon className="ml-auto h-4 w-4 opacity-50" /> </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0" align="start"> <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date(new Date().setDate(new Date().getDate() -1))} initialFocus /> </PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
+              <FormField control={form.control} name="deadline" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Deadline</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant="outline" className={cn( 'w-full justify-start text-left font-normal', !field.value && 'text-muted-foreground' )}> <div className="flex items-center justify-between w-full"> <span> {field.value ? format(field.value, "PPP") : ( <span>Pick a date</span> )} </span> <CalendarIcon className="h-4 w-4 opacity-50" /> </div> </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0" align="start"> <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date(new Date().setDate(new Date().getDate() -1))} initialFocus /> </PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
             </div>
             <FormField
               control={form.control}
@@ -209,6 +209,10 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                       type="number"
                       placeholder="e.g., 60"
                       {...field}
+                      onChange={(e) => {
+                        const value = e.target.valueAsNumber;
+                        field.onChange(isNaN(value) ? undefined : value);
+                      }}
                       value={field.value ?? ''}
                     />
                   </FormControl>
