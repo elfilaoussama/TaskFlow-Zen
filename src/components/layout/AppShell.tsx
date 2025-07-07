@@ -60,13 +60,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar collapsible="icon">
         <SidebarRail />
         <SidebarHeader>
-          <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BrainCircuit className="text-primary" />
-                <h1 className="text-xl font-semibold font-headline">TaskFlow Zen</h1>
+           <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0 transition-all duration-300">
+                <BrainCircuit className="text-primary flex-shrink-0" />
+                <h1 className="text-xl font-semibold font-headline whitespace-nowrap">TaskFlow Zen</h1>
               </div>
               <SidebarTrigger />
           </div>
@@ -75,7 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarMenu>
             <SidebarMenuItem>
               <Link href="/">
-                <SidebarMenuButton isActive={pathname === '/'}>
+                <SidebarMenuButton isActive={pathname === '/'} tooltip="General Tasks">
                   <LayoutDashboard />
                   General Tasks
                 </SidebarMenuButton>
@@ -83,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <Link href="/daily">
-                <SidebarMenuButton isActive={pathname === '/daily'}>
+                <SidebarMenuButton isActive={pathname === '/daily'} tooltip="Daily Kanban">
                   <Calendar />
                   Daily Kanban
                 </SidebarMenuButton>
@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <Link href="/analytics">
-                <SidebarMenuButton isActive={pathname === '/analytics'}>
+                <SidebarMenuButton isActive={pathname === '/analytics'} tooltip="Analytics">
                   <BarChart2 />
                   Analytics
                 </SidebarMenuButton>
@@ -99,7 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </SidebarMenuItem>
              <SidebarMenuItem>
               <Link href="/settings">
-                <SidebarMenuButton isActive={pathname === '/settings'}>
+                <SidebarMenuButton isActive={pathname === '/settings'} tooltip="Settings">
                   <Settings />
                   Settings
                 </SidebarMenuButton>
@@ -109,14 +109,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <Separator className="my-4" />
 
-          <div className="px-4 text-sm font-medium text-muted-foreground mb-2">Dashboard</div>
+          <div className="px-4 text-sm font-medium text-muted-foreground mb-2 group-data-[collapsible=icon]:hidden">Dashboard</div>
           <Dashboard />
 
         </SidebarContent>
         <SidebarFooter>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleImport}><Download className="mr-2 h-4 w-4" /> Import</Button>
-            <Button variant="outline" size="sm" onClick={handleExport}><Upload className="mr-2 h-4 w-4" /> Export</Button>
+          <div className="flex items-center gap-2 group-data-[collapsible=icon]:flex-col">
+            <Button variant="outline" size="sm" onClick={handleImport} className="w-full"><Download className="mr-2 h-4 w-4" /> <span className="group-data-[collapsible=icon]:hidden">Import</span></Button>
+            <Button variant="outline" size="sm" onClick={handleExport} className="w-full"><Upload className="mr-2 h-4 w-4" /> <span className="group-data-[collapsible=icon]:hidden">Export</span></Button>
           </div>
           <ThemeToggle />
         </SidebarFooter>

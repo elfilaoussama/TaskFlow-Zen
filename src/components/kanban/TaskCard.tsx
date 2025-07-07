@@ -5,7 +5,7 @@ import { Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { GripVertical, Calendar, CheckCircle2, Bot, PlusCircle, Undo2, Star, Clock, Paperclip } from 'lucide-react';
+import { GripVertical, Calendar, CheckCircle2, Bot, PlusCircle, Undo2, Star, Clock, Link2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { AddTaskDialog } from './AddTaskDialog';
@@ -101,7 +101,7 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
                 <div className="space-y-1 pt-1">
                     {task.attachments.slice(0, 2).map((att, index) => (
                         <a key={index} href={att.url} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
-                            <Paperclip className="h-3 w-3" />
+                            <Link2 className="h-3 w-3" />
                             <span className="truncate">{att.name}</span>
                         </a>
                     ))}
