@@ -8,7 +8,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, ZAxis
 } from 'recharts';
 import { eachDayOfInterval, format, parseISO } from 'date-fns';
-import { SWIMLANES, Task } from '@/lib/types';
+import { Task } from '@/lib/types';
 
 const calculatePriorityScore = (task: Task, weights: any) => {
     const { urgency, importance, impact } = task.priority;
@@ -54,12 +54,13 @@ export default function AnalyticsPage() {
     })
   }, [completedTasks, settings.priorityWeights]);
 
-  const swimlaneDistribution = useMemo(() => {
-    return SWIMLANES.map(lane => ({
-        name: lane,
-        count: tasks.filter(t => t.swimlane === lane).length
+  const categoryDistribution = useMemo(() => {
+    return settings.categories.map(cat => ({
+        name: cat.name,
+        count: tasks.filter(t => t.categoryId === cat.id).length,
+        fill: cat.color
     }))
-  }, [tasks]);
+  }, [tasks, settings.categories]);
 
   return (
     <div className="flex flex-col h-full p-4 md:p-6">
@@ -84,18 +85,18 @@ export default function AnalyticsPage() {
             </CardContent>
         </Card>
         <Card>
-            <CardHeader><CardTitle>Swimlane Distribution</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Category Distribution</CardTitle></CardHeader>
             <CardContent className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={swimlaneDistribution}>
+                    <BarChart data={categoryDistribution}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis allowDecimals={false} />
                         <Tooltip />
                         <Bar dataKey="count" name="Task Count">
-                            <Cell fill="hsl(var(--chart-1))" />
-                            <Cell fill="hsl(var(--chart-2))" />
-                            <Cell fill="hsl(var(--chart-3))" />
+                            {categoryDistribution.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
                         </Bar>
                     </BarChart>
                 </ResponsiveContainer>

@@ -29,13 +29,14 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useTaskContext } from '@/contexts/TaskContext';
-import { Task, SWIMLANES, SwimlaneId } from '@/lib/types';
+import { Task } from '@/lib/types';
 import { useSound } from '@/hooks/use-sound';
+import { Slider } from '@/components/ui/slider';
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  swimlane: z.enum(SWIMLANES),
+  categoryId: z.string().min(1, 'Category is required'),
   tags: z.array(z.string()).optional(),
   deadline: z.date(),
   priority: z.object({
@@ -51,11 +52,10 @@ interface AddTaskDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   taskToEdit?: Task;
-  boardType: 'general' | 'daily';
 }
 
-export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit, boardType }: AddTaskDialogProps) {
-  const { addTask, updateTask, deleteTask } = useTaskContext();
+export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogProps) {
+  const { addTask, updateTask, deleteTask, settings } = useTaskContext();
   const playSound = useSound();
 
   const form = useForm<TaskFormValues>({
@@ -63,7 +63,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit, boardType }: AddT
     defaultValues: {
       title: '',
       description: '',
-      swimlane: 'Morning',
+      categoryId: settings.categories[0]?.id || '',
       tags: [],
       deadline: new Date(),
       priority: { urgency: 5, importance: 5, impact: 5 },
@@ -75,15 +75,22 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit, boardType }: AddT
       form.reset({
         title: taskToEdit.title,
         description: taskToEdit.description,
-        swimlane: taskToEdit.swimlane,
+        categoryId: taskToEdit.categoryId,
         tags: taskToEdit.tags,
         deadline: new Date(taskToEdit.deadline),
         priority: taskToEdit.priority,
       });
     } else {
-      form.reset();
+      form.reset({
+        title: '',
+        description: '',
+        categoryId: settings.categories[0]?.id,
+        tags: [],
+        deadline: new Date(new Date().setHours(23, 59, 59, 999)), // Default to end of today
+        priority: { urgency: 5, importance: 5, impact: 5 },
+      });
     }
-  }, [taskToEdit, form]);
+  }, [taskToEdit, form, isOpen, settings.categories]);
 
   const onSubmit = (data: TaskFormValues) => {
     const taskData = {
@@ -93,7 +100,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit, boardType }: AddT
     if (taskToEdit) {
       updateTask(taskToEdit.id, taskData);
     } else {
-      addTask(taskData, boardType);
+      addTask(taskData);
       playSound('add');
     }
     setIsOpen(false);
@@ -144,19 +151,19 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit, boardType }: AddT
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="swimlane"
+                name="categoryId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Swimlane</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a swimlane" />
+                          <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {SWIMLANES.map(lane => (
-                          <SelectItem key={lane} value={lane}>{lane}</SelectItem>
+                        {settings.categories.map(cat => (
+                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -203,23 +210,41 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit, boardType }: AddT
             
             <div className="space-y-2">
                 <FormLabel>Priority</FormLabel>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 border rounded-lg">
                     <FormField control={form.control} name="priority.urgency" render={({ field }) => (
                         <FormItem>
                             <FormLabel className="text-sm">Urgency ({field.value})</FormLabel>
-                            <FormControl><Input type="range" min="1" max="10" {...field} /></FormControl>
+                            <FormControl>
+                                <Slider
+                                    min={1} max={10} step={1}
+                                    value={[field.value]}
+                                    onValueChange={(value) => field.onChange(value[0])}
+                                />
+                            </FormControl>
                         </FormItem>
                     )} />
                     <FormField control={form.control} name="priority.importance" render={({ field }) => (
                         <FormItem>
                             <FormLabel className="text-sm">Importance ({field.value})</FormLabel>
-                            <FormControl><Input type="range" min="1" max="10" {...field} /></FormControl>
+                             <FormControl>
+                                <Slider
+                                    min={1} max={10} step={1}
+                                    value={[field.value]}
+                                    onValueChange={(value) => field.onChange(value[0])}
+                                />
+                            </FormControl>
                         </FormItem>
                     )} />
                     <FormField control={form.control} name="priority.impact" render={({ field }) => (
                         <FormItem>
                             <FormLabel className="text-sm">Impact ({field.value})</FormLabel>
-                            <FormControl><Input type="range" min="1" max="10" {...field} /></FormControl>
+                             <FormControl>
+                                <Slider
+                                    min={1} max={10} step={1}
+                                    value={[field.value]}
+                                    onValueChange={(value) => field.onChange(value[0])}
+                                />
+                            </FormControl>
                         </FormItem>
                     )} />
                 </div>

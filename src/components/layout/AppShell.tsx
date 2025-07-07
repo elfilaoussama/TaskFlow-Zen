@@ -15,12 +15,12 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
+  SidebarRail,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { Separator } from '@/components/ui/separator';
-import { SettingsPanel } from '@/components/settings/SettingsPanel';
 import { Dashboard } from '@/components/stats/Dashboard';
 import { useSound } from '@/hooks/use-sound';
 
@@ -61,6 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <Sidebar>
+        <SidebarRail />
         <SidebarHeader>
           <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -76,7 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link href="/">
                 <SidebarMenuButton isActive={pathname === '/'}>
                   <LayoutDashboard />
-                  General Kanban
+                  General Tasks
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
@@ -96,17 +97,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
+             <SidebarMenuItem>
+              <Link href="/settings">
+                <SidebarMenuButton isActive={pathname === '/settings'}>
+                  <Settings />
+                  Settings
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
           </SidebarMenu>
 
           <Separator className="my-4" />
 
           <div className="px-4 text-sm font-medium text-muted-foreground mb-2">Dashboard</div>
           <Dashboard />
-
-          <Separator className="my-4" />
-
-          <div className="px-4 text-sm font-medium text-muted-foreground mb-2">Settings</div>
-          <SettingsPanel />
 
         </SidebarContent>
         <SidebarFooter>

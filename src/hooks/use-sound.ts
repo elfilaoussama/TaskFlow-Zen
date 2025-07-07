@@ -21,40 +21,40 @@ export function useSound() {
     if (!settings.soundEnabled || !isInitialized) return;
 
     try {
-      let synth;
       switch (type) {
         case 'drag':
-          synth = new Tone.Synth({
+           new Tone.Synth({
             oscillator: { type: 'sine' },
-            envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.1 },
-          }).toDestination();
-          synth.triggerAttackRelease('C4', '8n');
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 },
+          }).toDestination().triggerAttackRelease("A2", "32n");
           break;
         case 'drop':
-          synth = new Tone.Synth({
-            oscillator: { type: 'triangle' },
-            envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 },
-          }).toDestination();
-          synth.triggerAttackRelease('E4', '8n', Tone.now());
-          synth.triggerAttackRelease('G4', '8n', Tone.now() + 0.1);
+          new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 },
+          }).toDestination().triggerAttackRelease('C4', '16n');
           break;
         case 'complete':
-           const polySynth = new Tone.PolySynth(Tone.Synth, {
-            oscillator: { type: "fatsawtooth", count: 3, spread: 30 },
-            envelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.4, attackCurve: "exponential" },
+           const completeSynth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "amsine", harmonicity: 1.2, modulationType: 'sine' },
+            envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 },
            }).toDestination();
-           polySynth.triggerAttackRelease(["C4", "E4", "G4", "B4"], 0.5);
+           completeSynth.triggerAttackRelease(["C4", "G4", "C5"], "8n");
           break;
         case 'add':
-          const feedbackDelay = new Tone.FeedbackDelay("8n", 0.5).toDestination();
-          new Tone.MembraneSynth().toDestination().connect(feedbackDelay).triggerAttackRelease("C2", "8n");
+          const addSynth = new Tone.Synth({
+            oscillator: { type: 'triangle' },
+            envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 },
+          }).toDestination();
+          addSynth.triggerAttackRelease('C4', '16n', Tone.now());
+          addSynth.triggerAttackRelease('E4', '16n', Tone.now() + 0.1);
           break;
         case 'delete':
-           const noiseSynth = new Tone.NoiseSynth({
-             noise: { type: 'white' },
-             envelope: { attack: 0.005, decay: 0.1, sustain: 0 },
+           const deleteSynth = new Tone.Synth({
+             oscillator: { type: 'triangle' },
+             envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 },
            }).toDestination();
-           noiseSynth.triggerAttackRelease("4n");
+           deleteSynth.triggerAttackRelease("A2", "16n");
           break;
       }
     } catch (error) {
@@ -63,12 +63,18 @@ export function useSound() {
   }, [settings.soundEnabled, isInitialized]);
 
   useEffect(() => {
-    document.body.addEventListener('click', initializeAudio, { once: true });
-    document.body.addEventListener('dragstart', initializeAudio, { once: true });
+    const init = async () => {
+      await initializeAudio();
+    };
+    
+    document.body.addEventListener('click', init, { once: true });
+    document.body.addEventListener('keydown', init, { once: true });
+    document.body.addEventListener('dragstart', init, { once: true });
 
     return () => {
-      document.body.removeEventListener('click', initializeAudio);
-      document.body.removeEventListener('dragstart', initializeAudio);
+      document.body.removeEventListener('click', init);
+      document.body.removeEventListener('keydown', init);
+      document.body.removeEventListener('dragstart', init);
     }
   }, [initializeAudio]);
 
