@@ -50,7 +50,7 @@ export function GeneralTaskList() {
     const sortFn = (a: Task, b: Task) => calculatePriorityScore(b, settings.priorityWeights) - calculatePriorityScore(a, settings.priorityWeights);
     
     active.sort(sortFn);
-    completed.sort((a,b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime());
+    completed.sort(sortFn);
 
     return { activeTasks: active, completedTasks: completed };
   }, [tasks, settings.priorityWeights]);
