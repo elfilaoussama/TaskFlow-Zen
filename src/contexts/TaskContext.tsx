@@ -128,17 +128,15 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   
   const moveFromGeneralToDaily = useCallback((taskId: string) => {
-    setTasks(prevTasks => {
-        const task = prevTasks.find(t => t.id === taskId);
-        if (!task) {
-            toast({ title: "Error", description: "Task not found.", variant: "destructive" });
-            return prevTasks;
-        }
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) {
+        toast({ title: "Error", description: "Task not found.", variant: "destructive" });
+        return;
+    }
 
-        toast({ title: "Task Added to Daily Board", description: `"${task.title}" is now on your daily plan.` });
-        return prevTasks.map(t => t.id === taskId ? { ...t, isDaily: true, swimlane: 'Morning' } : t);
-    });
-  }, [toast]);
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, isDaily: true, swimlane: 'Morning' } : t));
+    toast({ title: "Task Added to Daily Board", description: `"${task.title}" is now on your daily plan.` });
+  }, [tasks, toast]);
 
   const updateSettings = useCallback((newSettings: Partial<Settings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
