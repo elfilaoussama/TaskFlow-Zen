@@ -192,7 +192,28 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
               <FormField control={form.control} name="categoryId" render={({ field }) => ( <FormItem> <FormLabel>Category</FormLabel> <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a category" /> </SelectTrigger> </FormControl> <SelectContent> {settings.categories.map(cat => ( <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
               <FormField control={form.control} name="deadline" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Deadline</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant="outline" className={cn( 'w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground' )}> {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>} <CalendarIcon className="ml-auto h-4 w-4 opacity-50" /> </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0" align="start"> <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date(new Date().setDate(new Date().getDate() -1))} initialFocus /> </PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
             </div>
-            <FormField control={form.control} name="duration" render={({ field }) => ( <FormItem> <FormLabel>Estimated Duration (minutes)</FormLabel> <FormControl> <Input type="number" placeholder="e.g., 60" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} /> </FormControl> <FormMessage /> </FormItem> )}/>
+            <FormField
+              control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estimated Duration (minutes)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 60"
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value, 10);
+                        field.onChange(isNaN(value) ? undefined : value);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="space-y-2">
                 <FormLabel>Priority</FormLabel>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 border rounded-lg">
@@ -209,7 +230,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                     <Card key={field.id} className="relative group">
                       <CardContent className="p-0 aspect-square flex items-center justify-center">
                         {field.type === 'file' && field.fileType?.startsWith('image/') ? (
-                          <Image src={field.url} alt={field.name} layout="fill" objectFit="cover" className="rounded-md" />
+                          <Image src={field.url} alt={field.name} fill style={{objectFit: 'cover'}} className="rounded-md" />
                         ) : (
                           <div className="flex flex-col items-center gap-1 text-muted-foreground p-1">
                             {field.type === 'link' ? <Link className="h-8 w-8" /> : <FileIcon className="h-8 w-8" />}
