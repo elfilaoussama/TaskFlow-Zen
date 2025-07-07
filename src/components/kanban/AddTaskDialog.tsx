@@ -115,6 +115,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
       title: '', description: '', categoryId: '', tags: [],
       deadline: new Date(), priority: { urgency: 5, importance: 5, impact: 5 },
       attachments: [],
+      duration: undefined,
     },
   });
   
@@ -212,7 +213,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                           field.onChange(undefined);
                         } else {
                           const num = parseInt(value, 10);
-                          if (!isNaN(num)) {
+                          if (!isNaN(num) && num >= 0) {
                             field.onChange(num);
                           }
                         }
