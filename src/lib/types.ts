@@ -18,9 +18,9 @@ export const DEFAULT_CATEGORIES: Category[] = [
 export interface Attachment {
   id: string;
   name: string;
-  url: string; // Can be a web URL or a data URI
-  type: 'link' | 'file';
-  fileType?: string; // e.g., 'image/png'
+  url: string; 
+  type: 'link';
+  fileType?: string; 
 }
 
 export interface PriorityParams {
@@ -62,8 +62,4 @@ export interface Settings {
   tags: string[];
   timezones: { id: string; name: string }[];
   soundEnabled: boolean;
-  dailyObjective: {
-    tasks: number;
-    hours: number;
-  };
 }

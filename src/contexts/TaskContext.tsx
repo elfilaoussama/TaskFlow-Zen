@@ -36,10 +36,6 @@ const defaultSettings: Settings = {
   tags: ['Work', 'Personal', 'Urgent'],
   timezones: [{ id: 'local', name: 'Local Time' }],
   soundEnabled: true,
-  dailyObjective: {
-    tasks: 5,
-    hours: 4,
-  },
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);

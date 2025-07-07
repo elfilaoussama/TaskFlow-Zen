@@ -150,18 +150,6 @@ export default function SettingsPage() {
     });
   };
 
-  const handleObjectiveChange = (field: 'tasks' | 'hours', value: string) => {
-    const numValue = parseInt(value, 10);
-    if (isNaN(numValue) || numValue < 0) return;
-
-    updateSettings({
-        dailyObjective: {
-            ...settings.dailyObjective,
-            [field]: numValue,
-        },
-    });
-  };
-
   return (
     <>
       <div className="flex flex-col h-full p-4 md:p-6">
@@ -252,33 +240,6 @@ export default function SettingsPage() {
                             </div>
                         </div>
                     ))}
-                </CardContent>
-            </Card>
-
-            <Separator />
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Daily Objectives</CardTitle>
-                    <CardDescription>Set your daily goals for tasks and hours.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <Label htmlFor="daily-tasks-obj" className="w-32">Tasks per day</Label>
-                        <Input id="daily-tasks-obj" type="number"
-                            value={settings.dailyObjective.tasks}
-                            onChange={(e) => handleObjectiveChange('tasks', e.target.value)}
-                            className="w-24"
-                        />
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Label htmlFor="daily-hours-obj" className="w-32">Hours per day</Label>
-                        <Input id="daily-hours-obj" type="number"
-                            value={settings.dailyObjective.hours}
-                            onChange={(e) => handleObjectiveChange('hours', e.target.value)}
-                            className="w-24"
-                        />
-                    </div>
                 </CardContent>
             </Card>
             
