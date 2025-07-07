@@ -73,7 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <Link href="/" passHref legacyBehavior>
+              <Link href="/">
                 <SidebarMenuButton isActive={pathname === '/'}>
                   <LayoutDashboard />
                   General Kanban
@@ -81,7 +81,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <Link href="/daily" passHref legacyBehavior>
+              <Link href="/daily">
                 <SidebarMenuButton isActive={pathname === '/daily'}>
                   <Calendar />
                   Daily Kanban
@@ -89,7 +89,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <Link href="/analytics" passHref legacyBehavior>
+              <Link href="/analytics">
                 <SidebarMenuButton isActive={pathname === '/analytics'}>
                   <BarChart2 />
                   Analytics
