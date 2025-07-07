@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Skeleton } from '../ui/skeleton';
 
 export function Dashboard() {
   const { tasks, isLoading } = useTaskContext();
@@ -29,12 +30,21 @@ export function Dashboard() {
   }, [stats]);
 
   if (isLoading) {
-    return <div className="p-4 text-sm text-muted-foreground group-data-[collapsible=icon]:hidden">Loading stats...</div>
+    return (
+        <div className="px-4 space-y-4">
+            <div className="grid grid-cols-3 gap-2 text-center">
+                {[1,2,3].map(i => <Skeleton key={i} className="h-10" />)}
+            </div>
+            <div className="h-28 flex justify-center items-center">
+                <Skeleton className="h-24 w-24 rounded-full" />
+            </div>
+        </div>
+    )
   }
 
   return (
     <div className="px-4 space-y-4">
-        <div className="grid grid-cols-3 gap-2 text-center group-data-[collapsible=icon]:hidden">
+        <div className="grid grid-cols-3 gap-2 text-center">
             <div>
                 <p className="text-2xl font-bold">{stats.todoInPool}</p>
                 <p className="text-xs text-muted-foreground">In Pool</p>
@@ -76,11 +86,10 @@ export function Dashboard() {
                                 fontSize: '12px',
                                 padding: '4px 8px',
                             }}
-                            wrapperClassName="group-data-[collapsible=icon]:hidden"
                         />
                     </PieChart>
                 ) : (
-                    <div className="flex items-center justify-center h-full text-center text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+                    <div className="flex items-center justify-center h-full text-center text-xs text-muted-foreground">
                         No tasks yet.
                     </div>
                 )}

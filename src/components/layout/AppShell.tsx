@@ -108,9 +108,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </SidebarMenu>
 
           <Separator className="my-4" />
-
+          
           <div className="px-4 text-sm font-medium text-muted-foreground mb-2 group-data-[collapsible=icon]:hidden">Dashboard</div>
-          <Dashboard />
+          <div className="group-data-[collapsible=icon]:hidden">
+            <Dashboard />
+          </div>
 
         </SidebarContent>
         <SidebarFooter>
