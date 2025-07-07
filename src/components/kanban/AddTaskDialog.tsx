@@ -63,10 +63,7 @@ const taskSchema = z.object({
     importance: z.coerce.number().min(1).max(10),
     impact: z.coerce.number().min(1).max(10),
   }),
-  duration: z.preprocess(
-    (val) => (val === "" || val === null || val === undefined ? undefined : val),
-    z.coerce.number().int().min(0, "Duration must be positive.").optional()
-  ),
+  duration: z.coerce.number().int().min(0, "Duration must be positive.").optional(),
   attachments: z.array(attachmentSchema).optional(),
 });
 
@@ -210,17 +207,17 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
               <FormField control={form.control} name="deadline" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Deadline</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant="outline" className={cn( 'w-full justify-start text-left font-normal', !field.value && 'text-muted-foreground' )}> <div className="flex items-center justify-between w-full"> <span>{field.value ? format(field.value, 'PPP') : 'Pick a date'}</span> <CalendarIcon className="h-4 w-4 opacity-50" /> </div> </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0" align="start"> <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date(new Date().setDate(new Date().getDate() -1))} initialFocus /> </PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
             </div>
             
-            <FormField 
-              control={form.control} 
-              name="duration" 
-              render={({ field }) => ( 
-                <FormItem> 
-                  <FormLabel>Estimated Duration (minutes)</FormLabel> 
-                  <FormControl> 
-                    <Input 
-                      type="number" 
-                      placeholder="e.g., 60" 
-                      value={field.value ?? ''} 
+            <FormField
+              control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estimated Duration (minutes)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 60"
+                      value={field.value ?? ''}
                       onChange={e => {
                         const value = e.target.valueAsNumber;
                         field.onChange(isNaN(value) ? undefined : value);
@@ -228,10 +225,10 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                       name={field.name}
                       onBlur={field.onBlur}
                       ref={field.ref}
-                    /> 
-                  </FormControl> 
-                  <FormMessage /> 
-                </FormItem> 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
 
