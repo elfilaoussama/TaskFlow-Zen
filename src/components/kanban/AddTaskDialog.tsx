@@ -206,18 +206,11 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                       type="number"
                       placeholder="e.g., 60"
                       {...field}
-                      value={field.value ?? ''}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === '') {
-                          field.onChange(undefined);
-                        } else {
-                          const num = parseInt(value, 10);
-                          if (!isNaN(num) && num >= 0) {
-                            field.onChange(num);
-                          }
-                        }
+                        const value = parseInt(e.target.value, 10);
+                        field.onChange(isNaN(value) || value < 0 ? undefined : value);
                       }}
+                      value={field.value ?? ''}
                     />
                   </FormControl>
                   <FormMessage />
