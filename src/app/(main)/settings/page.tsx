@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { HexColorPicker } from 'react-colorful';
-import { Category } from '@/lib/types';
+import { Category, SwimlaneId, SWIMLANES } from '@/lib/types';
 import { PlusCircle, Trash2, Edit } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
@@ -135,6 +135,21 @@ export default function SettingsPage() {
     setIsCategoryDialogOpen(true);
   }
 
+  const handleTimeChange = (swimlane: SwimlaneId, period: 'start' | 'end', value: string) => {
+    const hour = parseInt(value, 10);
+    if (isNaN(hour) || hour < 0 || hour > 24) return;
+
+    updateSettings({
+      swimlaneTimes: {
+        ...settings.swimlaneTimes,
+        [swimlane]: {
+          ...settings.swimlaneTimes[swimlane],
+          [period]: hour,
+        },
+      },
+    });
+};
+
   return (
     <>
       <div className="flex flex-col h-full p-4 md:p-6">
@@ -196,6 +211,38 @@ export default function SettingsPage() {
                 </CardContent>
             </Card>
             
+            <Separator />
+
+             <Card>
+                <CardHeader>
+                    <CardTitle>Swimlane Timings</CardTitle>
+                    <CardDescription>Set the start and end hours for your daily swimlanes (0-24h format).</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {(SWIMLANES).map(swimlane => (
+                        <div key={swimlane} className="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+                            <Label className="font-medium">{swimlane}</Label>
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor={`${swimlane}-start`} className="text-sm">Start</Label>
+                                <Input id={`${swimlane}-start`} type="number" min="0" max="24"
+                                    value={settings.swimlaneTimes[swimlane].start}
+                                    onChange={(e) => handleTimeChange(swimlane, 'start', e.target.value)}
+                                    className="w-20"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor={`${swimlane}-end`} className="text-sm">End</Label>
+                                <Input id={`${swimlane}-end`} type="number" min="0" max="24"
+                                    value={settings.swimlaneTimes[swimlane].end}
+                                    onChange={(e) => handleTimeChange(swimlane, 'end', e.target.value)}
+                                    className="w-20"
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+
             <Separator />
 
              <Card>

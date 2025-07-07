@@ -64,8 +64,12 @@ export function GeneralTaskList() {
   }, [activeTasks, settings.categories]);
 
   const defaultAccordionOpen = useMemo(() => {
-    return tasksByCategory.filter(cat => cat.tasks.length > 0).map(cat => cat.id);
-  }, [tasksByCategory]);
+    const open = tasksByCategory.filter(cat => cat.tasks.length > 0).map(cat => cat.id);
+    if (completedTasks.length > 0) {
+      open.push('completed');
+    }
+    return open;
+  }, [tasksByCategory, completedTasks.length]);
 
   if (isLoading) {
     return (
@@ -91,7 +95,7 @@ export function GeneralTaskList() {
             {completedTasks.length > 0 && (
                 <AccordionItem value="completed">
                     <AccordionTrigger>
-                        <h3 className="text-xl font-semibold">Completed Tasks ({completedTasks.length})</h3>
+                        <h3 className="text-xl font-semibold">Finished Tasks ({completedTasks.length})</h3>
                     </AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-2">
                          {completedTasks.map(task => <TaskCard key={task.id} task={task} boardType="general" />)}

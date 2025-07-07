@@ -23,36 +23,38 @@ export function useSound() {
     try {
       switch (type) {
         case 'drag':
-           new Tone.Synth({
-            oscillator: { type: 'sine' },
-            envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 },
-          }).toDestination().triggerAttackRelease("A2", "32n");
+           new Tone.MembraneSynth({
+            pitchDecay: 0.01,
+            octaves: 2,
+            envelope: { attack: 0.001, decay: 0.2, sustain: 0 },
+          }).toDestination().triggerAttackRelease('C2', '32n');
           break;
         case 'drop':
-          new Tone.Synth({
+           new Tone.MembraneSynth({
+            pitchDecay: 0.05,
+            octaves: 4,
+            envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 },
             oscillator: { type: 'sine' },
-            envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 },
-          }).toDestination().triggerAttackRelease('C4', '16n');
+          }).toDestination().triggerAttackRelease('C3', '8n');
           break;
         case 'complete':
            const completeSynth = new Tone.PolySynth(Tone.Synth, {
-            oscillator: { type: "amsine", harmonicity: 1.2, modulationType: 'sine' },
-            envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 },
+            oscillator: { type: "fmsine" },
+            envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.4 },
            }).toDestination();
-           completeSynth.triggerAttackRelease(["C4", "G4", "C5"], "8n");
+           completeSynth.triggerAttackRelease(["C4", "E4", "G4"], "8n");
           break;
         case 'add':
           const addSynth = new Tone.Synth({
-            oscillator: { type: 'triangle' },
-            envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 },
+            oscillator: { type: 'amtriangle' },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 },
           }).toDestination();
-          addSynth.triggerAttackRelease('C4', '16n', Tone.now());
-          addSynth.triggerAttackRelease('E4', '16n', Tone.now() + 0.1);
+          addSynth.triggerAttackRelease('C5', '16n');
           break;
         case 'delete':
            const deleteSynth = new Tone.Synth({
-             oscillator: { type: 'triangle' },
-             envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 },
+             oscillator: { type: 'fmsquare' },
+             envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 },
            }).toDestination();
            deleteSynth.triggerAttackRelease("A2", "16n");
           break;

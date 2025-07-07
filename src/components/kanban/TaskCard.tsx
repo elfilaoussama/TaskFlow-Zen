@@ -5,7 +5,7 @@ import { Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { GripVertical, Calendar, CheckCircle2, Bot, PlusCircle, Undo2 } from 'lucide-react';
+import { GripVertical, Calendar, CheckCircle2, Bot, PlusCircle, Undo2, Star, Clock, Paperclip } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { AddTaskDialog } from './AddTaskDialog';
@@ -17,6 +17,18 @@ interface TaskCardProps {
   boardType: 'general' | 'daily';
 }
 
+const calculatePriorityScore = (task: Task, weights: any) => {
+    const { urgency, importance, impact } = task.priority;
+    const deadlineDate = new Date(task.deadline);
+    const now = new Date();
+    const daysUntilDeadline = (deadlineDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
+    let deadlineFactor = 1;
+    if (daysUntilDeadline < 1) deadlineFactor = 10;
+    else if (daysUntilDeadline < 3) deadlineFactor = 7;
+    else if (daysUntilDeadline < 7) deadlineFactor = 4;
+    return urgency * weights.urgency + importance * weights.importance + impact * weights.impact + deadlineFactor * weights.deadline;
+};
+
 export function TaskCard({ task, boardType }: TaskCardProps) {
   const { settings, updateTask, categorizeTask, moveFromGeneralToDaily } = useTaskContext();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -24,6 +36,8 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
   const playSound = useSound();
 
   const category = useMemo(() => settings.categories.find(c => c.id === task.categoryId), [task.categoryId, settings.categories]);
+  const priorityScore = useMemo(() => calculatePriorityScore(task, settings.priorityWeights), [task, settings.priorityWeights]);
+
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     e.dataTransfer.setData('taskId', task.id);
@@ -69,16 +83,39 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
           <CardTitle className="text-base font-medium">{task.title}</CardTitle>
           {boardType === 'daily' && <GripVertical className="h-5 w-5 text-muted-foreground" />}
         </CardHeader>
-        <CardContent className="p-4 pt-0 text-sm text-muted-foreground">
-          {task.description && <p className="truncate mb-3">{task.description}</p>}
-          <div className="flex items-center gap-2 text-xs">
-            <Calendar className="h-4 w-4" />
-            <span>{formatDistanceToNow(new Date(task.deadline), { addSuffix: true })}</span>
-          </div>
+        <CardContent className="p-4 pt-0 text-sm text-muted-foreground space-y-2">
+            {task.description && <p className="truncate mb-1">{task.description}</p>}
+            <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5" title={`Deadline: ${new Date(task.deadline).toLocaleDateString()}`}>
+                    <Calendar className="h-3 w-3" /> 
+                    <span>{formatDistanceToNow(new Date(task.deadline), { addSuffix: true })}</span>
+                </div>
+                {task.duration && (
+                    <div className="flex items-center gap-1.5" title="Estimated duration">
+                        <Clock className="h-3 w-3" /> 
+                        <span>{task.duration} min</span>
+                    </div>
+                )}
+            </div>
+            {task.attachments && task.attachments.length > 0 && (
+                <div className="space-y-1 pt-1">
+                    {task.attachments.slice(0, 2).map((att, index) => (
+                        <a key={index} href={att.url} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                            <Paperclip className="h-3 w-3" />
+                            <span className="truncate">{att.name}</span>
+                        </a>
+                    ))}
+                    {task.attachments.length > 2 && <span className="text-xs text-muted-foreground pl-5">...and {task.attachments.length - 2} more</span>}
+                </div>
+            )}
         </CardContent>
         <CardFooter className="p-4 pt-0 flex justify-between items-center">
-          <div className="flex gap-1 flex-wrap">
+          <div className="flex gap-1 flex-wrap items-center">
             {category && <Badge variant="secondary" style={{ backgroundColor: `${category.color}20`, color: category.color }}>{category.name}</Badge>}
+            <Badge variant="outline" className="flex items-center gap-1 text-xs" title="Priority Score">
+                <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                {priorityScore.toFixed(0)}
+            </Badge>
           </div>
           <div className="flex items-center gap-1">
              {boardType === 'general' && task.status === 'todo' && (

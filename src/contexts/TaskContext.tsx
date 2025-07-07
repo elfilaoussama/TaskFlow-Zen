@@ -27,6 +27,11 @@ interface TaskContextType {
 
 const defaultSettings: Settings = {
   priorityWeights: { urgency: 1, importance: 1, impact: 1, deadline: 1 },
+  swimlaneTimes: {
+    Morning: { start: 7, end: 12 },
+    Midday: { start: 12, end: 16 },
+    Evening: { start: 18, end: 24 },
+  },
   categories: DEFAULT_CATEGORIES,
   tags: ['Work', 'Personal', 'Urgent'],
   timezones: [{ id: 'local', name: 'Local Time' }],
@@ -59,15 +64,12 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
       setTasks(loadedTasks);
       if (storedSettings) {
         const parsedSettings = JSON.parse(storedSettings);
-        if (!parsedSettings.categories || parsedSettings.categories.length === 0) {
-          parsedSettings.categories = DEFAULT_CATEGORIES;
-        }
-        setSettings(parsedSettings);
+         // Ensure settings have all default keys
+        setSettings({ ...defaultSettings, ...parsedSettings });
       }
 
     } catch (error) {
       console.error("Failed to load data from localStorage", error);
-      toast({ title: "Error", description: "Could not load your data.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }

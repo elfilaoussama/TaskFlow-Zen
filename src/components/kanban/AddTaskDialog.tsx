@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Trash2 } from 'lucide-react';
+import { CalendarIcon, Trash2, PlusCircle, Link2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -32,6 +32,11 @@ import { useTaskContext } from '@/contexts/TaskContext';
 import { Task } from '@/lib/types';
 import { useSound } from '@/hooks/use-sound';
 import { Slider } from '@/components/ui/slider';
+
+const attachmentSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  url: z.string().url('Must be a valid URL'),
+});
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -44,6 +49,8 @@ const taskSchema = z.object({
     importance: z.coerce.number().min(1).max(10),
     impact: z.coerce.number().min(1).max(10),
   }),
+  duration: z.coerce.number().min(0).optional(),
+  attachments: z.array(attachmentSchema).optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
@@ -67,7 +74,14 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
       tags: [],
       deadline: new Date(),
       priority: { urgency: 5, importance: 5, impact: 5 },
+      duration: 0,
+      attachments: [],
     },
+  });
+  
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "attachments"
   });
 
   useEffect(() => {
@@ -79,6 +93,8 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
         tags: taskToEdit.tags,
         deadline: new Date(taskToEdit.deadline),
         priority: taskToEdit.priority,
+        duration: taskToEdit.duration || 0,
+        attachments: taskToEdit.attachments || [],
       });
     } else {
       form.reset({
@@ -88,6 +104,8 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
         tags: [],
         deadline: new Date(new Date().setHours(23, 59, 59, 999)), // Default to end of today
         priority: { urgency: 5, importance: 5, impact: 5 },
+        duration: 0,
+        attachments: [],
       });
     }
   }, [taskToEdit, form, isOpen, settings.categories]);
@@ -116,7 +134,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{taskToEdit ? 'Edit Task' : 'Add New Task'}</DialogTitle>
         </DialogHeader>
@@ -207,6 +225,20 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                 )}
               />
             </div>
+
+            <FormField
+                control={form.control}
+                name="duration"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Estimated Duration (minutes)</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="e.g., 60" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || undefined)} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
             
             <div className="space-y-2">
                 <FormLabel>Priority</FormLabel>
@@ -248,6 +280,45 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                         </FormItem>
                     )} />
                 </div>
+            </div>
+
+            <div className="space-y-2">
+                <FormLabel>Attachments</FormLabel>
+                <div className="space-y-2">
+                    {fields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-2 p-2 border rounded-md">
+                            <Link2 className="h-4 w-4 text-muted-foreground" />
+                            <div className="flex-1 grid grid-cols-2 gap-2">
+                                <FormField
+                                    control={form.control}
+                                    name={`attachments.${index}.name`}
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl><Input placeholder="Name" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name={`attachments.${index}.url`}
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                            </div>
+                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(index)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', url: '' })}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Attachment
+                </Button>
             </div>
 
             <DialogFooter className="sm:justify-between pt-4">

@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Task, SwimlaneId } from '@/lib/types';
 import { TaskCard } from './TaskCard';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { cn } from '@/lib/utils';
 import { useSound } from '@/hooks/use-sound';
+import { formatDistanceToNowStrict } from 'date-fns';
 
 interface SwimlaneProps {
   id: SwimlaneId;
@@ -15,9 +16,46 @@ interface SwimlaneProps {
 }
 
 export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
-  const { moveTask } = useTaskContext();
+  const { moveTask, settings } = useTaskContext();
   const [isDragOver, setIsDragOver] = useState(false);
+  const [timeText, setTimeText] = useState('');
   const playSound = useSound();
+
+  useEffect(() => {
+    if (boardType !== 'daily') return;
+
+    const calculateTimeText = () => {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const swimlaneTimes = settings.swimlaneTimes[id];
+
+        if (!swimlaneTimes) return '';
+
+        const start = new Date(now);
+        start.setHours(swimlaneTimes.start, 0, 0, 0);
+        
+        const end = new Date(now);
+        if (swimlaneTimes.end === 24) {
+            end.setDate(end.getDate() + 1);
+            end.setHours(0,0,0,0);
+        } else {
+            end.setHours(swimlaneTimes.end, 0, 0, 0);
+        }
+
+        if (now < start) {
+            return `Starts in ${formatDistanceToNowStrict(start)}`;
+        } else if (now >= start && now < end) {
+            return `${formatDistanceToNowStrict(end)} left`;
+        } else {
+            return 'Finished for today';
+        }
+    };
+
+    setTimeText(calculateTimeText());
+    const interval = setInterval(() => setTimeText(calculateTimeText()), 60000); // update every minute
+
+    return () => clearInterval(interval);
+}, [id, settings.swimlaneTimes, boardType]);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -49,7 +87,10 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
       )}
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold font-headline text-foreground">{title}</h2>
+        <div className="flex items-baseline gap-2">
+          <h2 className="text-lg font-semibold font-headline text-foreground">{title}</h2>
+          {boardType === 'daily' && timeText && <span className="text-xs text-muted-foreground">{timeText}</span>}
+        </div>
         <span className="text-sm font-medium text-muted-foreground bg-background px-2 py-1 rounded-full">{tasks.length}</span>
       </div>
       <div className="h-full min-h-[200px]">

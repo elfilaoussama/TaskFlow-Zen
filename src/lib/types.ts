@@ -15,6 +15,10 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'health', name: 'Health & Fitness', color: '#ef4444' },
 ];
 
+export interface Attachment {
+  name: string;
+  url: string;
+}
 
 export interface PriorityParams {
   urgency: number;
@@ -35,6 +39,8 @@ export interface Task {
   status: 'todo' | 'completed';
   completedAt?: string;
   isDaily: boolean;
+  duration?: number; // Duration in minutes
+  attachments?: Attachment[];
 }
 
 export interface Settings {
@@ -43,6 +49,11 @@ export interface Settings {
     importance: number;
     impact: number;
     deadline: number;
+  };
+  swimlaneTimes: {
+    Morning: { start: number; end: number };
+    Midday: { start: number; end: number };
+    Evening: { start: number; end: number };
   };
   categories: Category[];
   tags: string[];
