@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -205,14 +206,11 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                       {...field}
                       value={field.value ?? ''}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === '') {
+                        const num = e.currentTarget.valueAsNumber;
+                        if (isNaN(num)) {
                           field.onChange(undefined);
                         } else {
-                          const num = parseInt(value, 10);
-                          if (!isNaN(num)) {
-                            field.onChange(num);
-                          }
+                          field.onChange(num);
                         }
                       }}
                     />
