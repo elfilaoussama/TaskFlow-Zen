@@ -56,7 +56,10 @@ const taskSchema = z.object({
     importance: z.coerce.number().min(1).max(10),
     impact: z.coerce.number().min(1).max(10),
   }),
-  duration: z.coerce.number().min(0).optional(),
+  duration: z.preprocess(
+    (val) => (val === "" || val === null ? undefined : val),
+    z.coerce.number().min(0, "Duration cannot be negative.").optional()
+  ),
   attachments: z.array(attachmentSchema).optional(),
 });
 
@@ -206,10 +209,6 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                       type="number"
                       placeholder="e.g., 60"
                       {...field}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value, 10);
-                        field.onChange(isNaN(value) || value < 0 ? undefined : value);
-                      }}
                       value={field.value ?? ''}
                     />
                   </FormControl>
