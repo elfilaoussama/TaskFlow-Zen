@@ -5,7 +5,7 @@ import { Task } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { GripVertical, Calendar, CheckCircle2, Bot, PlusCircle, Undo2, Star, Clock, Link2 } from 'lucide-react';
+import { GripVertical, Calendar, CheckCircle2, Bot, PlusCircle, Undo2, Star, Clock, Paperclip } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { AddTaskDialog } from './AddTaskDialog';
@@ -96,18 +96,13 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
                         <span>{task.duration} min</span>
                     </div>
                 )}
+                {task.attachments && task.attachments.length > 0 && (
+                    <div className="flex items-center gap-1.5" title={`${task.attachments.length} attachments`}>
+                        <Paperclip className="h-3 w-3" />
+                        <span>{task.attachments.length}</span>
+                    </div>
+                )}
             </div>
-            {task.attachments && task.attachments.length > 0 && (
-                <div className="space-y-1 pt-1">
-                    {task.attachments.slice(0, 2).map((att, index) => (
-                        <a key={index} href={att.url} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
-                            <Link2 className="h-3 w-3" />
-                            <span className="truncate">{att.name}</span>
-                        </a>
-                    ))}
-                    {task.attachments.length > 2 && <span className="text-xs text-muted-foreground pl-5">...and {task.attachments.length - 2} more</span>}
-                </div>
-            )}
         </CardContent>
         <CardFooter className="p-4 pt-0 flex justify-between items-center">
           <div className="flex gap-1 flex-wrap items-center">

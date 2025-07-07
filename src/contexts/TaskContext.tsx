@@ -36,6 +36,10 @@ const defaultSettings: Settings = {
   tags: ['Work', 'Personal', 'Urgent'],
   timezones: [{ id: 'local', name: 'Local Time' }],
   soundEnabled: true,
+  dailyObjective: {
+    tasks: 5,
+    hours: 4,
+  },
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -53,7 +57,6 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
       
       let loadedTasks = storedTasks ? JSON.parse(storedTasks) : [];
       
-      // Auto-clear daily tasks at the start of a new day
       const lastResetDate = localStorage.getItem('lastDailyReset');
       const today = new Date().toISOString().split('T')[0];
       if (lastResetDate !== today) {
@@ -64,7 +67,6 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
       setTasks(loadedTasks);
       if (storedSettings) {
         const parsedSettings = JSON.parse(storedSettings);
-         // Ensure settings have all default keys
         setSettings({ ...defaultSettings, ...parsedSettings });
       }
 
@@ -127,16 +129,27 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
   
-  const moveFromGeneralToDaily = useCallback((taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) {
-        toast({ title: "Error", description: "Task not found.", variant: "destructive" });
-        return;
+  const moveFromGeneralToDaily = (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (task) {
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId ? { ...t, isDaily: true, swimlane: 'Morning' } : t
+        )
+      );
+      toast({
+        title: 'Task Added to Daily Board',
+        description: `"${task.title}" is now on your daily plan.`,
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Task not found.',
+        variant: 'destructive',
+      });
     }
+  };
 
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, isDaily: true, swimlane: 'Morning' } : t));
-    toast({ title: "Task Added to Daily Board", description: `"${task.title}" is now on your daily plan.` });
-  }, [tasks, toast]);
 
   const updateSettings = useCallback((newSettings: Partial<Settings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
