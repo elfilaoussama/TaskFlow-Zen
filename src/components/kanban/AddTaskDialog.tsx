@@ -114,7 +114,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
     defaultValues: {
       title: '', description: '', categoryId: '', tags: [],
       deadline: new Date(), priority: { urgency: 5, importance: 5, impact: 5 },
-      duration: 0, attachments: [],
+      attachments: [],
     },
   });
   
@@ -129,14 +129,15 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
         tags: taskToEdit.tags,
         deadline: new Date(taskToEdit.deadline),
         priority: taskToEdit.priority,
-        duration: taskToEdit.duration || 0,
+        duration: taskToEdit.duration,
         attachments: taskToEdit.attachments || [],
       });
     } else {
       form.reset({
         title: '', description: '', categoryId: settings.categories[0]?.id,
         tags: [], deadline: new Date(new Date().setHours(23, 59, 59, 999)),
-        priority: { urgency: 5, importance: 5, impact: 5 }, duration: 0,
+        priority: { urgency: 5, importance: 5, impact: 5 },
+        duration: undefined,
         attachments: [],
       });
     }
@@ -206,11 +207,14 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                       {...field}
                       value={field.value ?? ''}
                       onChange={(e) => {
-                        const num = e.currentTarget.valueAsNumber;
-                        if (isNaN(num)) {
+                        const value = e.target.value;
+                        if (value === '') {
                           field.onChange(undefined);
                         } else {
-                          field.onChange(num);
+                          const num = parseInt(value, 10);
+                          if (!isNaN(num)) {
+                            field.onChange(num);
+                          }
                         }
                       }}
                     />
