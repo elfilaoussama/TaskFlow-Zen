@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { Task, Settings, SwimlaneId, Category, DEFAULT_CATEGORIES } from '@/lib/types';
+import { Task, Settings, SwimlaneId, Category, DEFAULT_CATEGORIES, Attachment } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '@/hooks/use-toast';
 import { getTaskCategory } from '@/app/actions';
@@ -31,6 +31,10 @@ const defaultSettings: Settings = {
     Morning: { start: 7, end: 12 },
     Midday: { start: 12, end: 16 },
     Evening: { start: 18, end: 24 },
+  },
+  dailyObjectives: {
+    tasks: 5,
+    hours: 6,
   },
   categories: DEFAULT_CATEGORIES,
   tags: ['Work', 'Personal', 'Urgent'],

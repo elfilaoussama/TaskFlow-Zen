@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -25,7 +26,7 @@ import {
 } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Trash2, Link, X } from 'lucide-react';
+import { CalendarIcon, Trash2, Link, X, Paperclip, File as FileIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -35,13 +36,21 @@ import { useSound } from '@/hooks/use-sound';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '../ui/badge';
 
-const attachmentSchema = z.object({
-  id: z.string(),
-  name: z.string().min(1, 'Name is required'),
-  url: z.string().url('Must be a valid URL'),
-  type: z.literal('link'), // Only links are supported now
-  fileType: z.string().optional(),
-});
+const attachmentSchema = z.union([
+  z.object({
+    id: z.string(),
+    name: z.string().min(1, 'Name is required'),
+    type: z.literal('link'),
+    url: z.string().url('Must be a valid URL'),
+  }),
+  z.object({
+    id: z.string(),
+    name: z.string().min(1, 'Name is required'),
+    type: z.literal('file'),
+    dataUri: z.string(),
+    fileType: z.string(),
+  })
+]);
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -108,6 +117,7 @@ const AddLinkPopover = ({ onAddLink }: { onAddLink: (name: string, url: string) 
 export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogProps) {
   const { addTask, updateTask, deleteTask, settings } = useTaskContext();
   const playSound = useSound();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
@@ -123,8 +133,6 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
 
   useEffect(() => {
     if (taskToEdit) {
-      // Filter out non-link attachments if they exist from previous versions
-      const linkAttachments = taskToEdit.attachments?.filter(a => a.type === 'link') || [];
       form.reset({
         title: taskToEdit.title,
         description: taskToEdit.description,
@@ -133,7 +141,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
         deadline: new Date(taskToEdit.deadline),
         priority: taskToEdit.priority,
         duration: taskToEdit.duration,
-        attachments: linkAttachments,
+        attachments: taskToEdit.attachments,
       });
     } else {
       form.reset({
@@ -145,6 +153,26 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
       });
     }
   }, [taskToEdit, form, isOpen, settings.categories]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUri = e.target?.result as string;
+        append({
+          id: uuidv4(),
+          type: 'file',
+          name: file.name,
+          fileType: file.type,
+          dataUri,
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 
   const onSubmit = (data: TaskFormValues) => {
     const taskData = { ...data, deadline: data.deadline.toISOString() };
@@ -181,25 +209,8 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
               <FormField control={form.control} name="categoryId" render={({ field }) => ( <FormItem> <FormLabel>Category</FormLabel> <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a category" /> </SelectTrigger> </FormControl> <SelectContent> {settings.categories.map(cat => ( <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
               <FormField control={form.control} name="deadline" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Deadline</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant="outline" className={cn( 'w-full justify-start text-left font-normal', !field.value && 'text-muted-foreground' )}> <div className="flex items-center justify-between w-full"> <span>{field.value ? format(field.value, 'PPP') : 'Pick a date'}</span> <CalendarIcon className="h-4 w-4 opacity-50" /> </div> </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0" align="start"> <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date(new Date().setDate(new Date().getDate() -1))} initialFocus /> </PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
             </div>
-            <FormField
-              control={form.control}
-              name="duration"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estimated Duration (minutes)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="e.g., 60"
-                      {...field}
-                      onChange={e => field.onChange(e.target.valueAsNumber || undefined)}
-                      value={field.value ?? ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormField control={form.control} name="duration" render={({ field }) => ( <FormItem> <FormLabel>Estimated Duration (minutes)</FormLabel> <FormControl> <Input type="number" placeholder="e.g., 60" {...field} onChange={e => field.onChange(e.target.valueAsNumber || undefined)} value={field.value ?? ''} /> </FormControl> <FormMessage /> </FormItem> )}/>
+
             <div className="space-y-2">
                 <FormLabel>Priority</FormLabel>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 border rounded-lg">
@@ -208,24 +219,43 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                     <FormField control={form.control} name="priority.impact" render={({ field }) => ( <FormItem> <FormLabel className="text-sm">Impact ({field.value})</FormLabel> <FormControl> <Slider min={1} max={10} step={1} value={[field.value]} onValueChange={(value) => field.onChange(value[0])} /> </FormControl> </FormItem> )}/>
                 </div>
             </div>
+            
             <div className="space-y-2">
               <FormLabel>Attachments</FormLabel>
               {fields.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                   {fields.map((field, index) => (
-                    <Badge key={field.id} variant="secondary" className="pl-2 pr-1">
-                      <a href={field.url} target="_blank" rel="noopener noreferrer" className="mr-1 hover:underline">{field.name}</a>
-                      <button type="button" onClick={() => remove(index)} className="rounded-full hover:bg-muted-foreground/20 p-0.5">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
+                    <div key={field.id} className="relative group aspect-square border rounded-md flex items-center justify-center">
+                       <button type="button" onClick={() => remove(index)} className="absolute -top-2 -right-2 z-10 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/80 p-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                         <X className="h-3 w-3" />
+                       </button>
+                       {field.type === 'file' && field.fileType.startsWith('image/') ? (
+                         <Image src={field.dataUri} alt={field.name} fill className="object-cover rounded-md" />
+                       ) : (
+                         <div className="flex flex-col items-center text-center p-1">
+                           <FileIcon className="h-6 w-6 text-muted-foreground" />
+                           <span className="text-xs text-muted-foreground mt-1 truncate">{field.name}</span>
+                         </div>
+                       )}
+                       {field.type === 'link' && (
+                         <a href={field.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center text-center p-1">
+                           <Link className="h-6 w-6 text-muted-foreground" />
+                           <span className="text-xs text-muted-foreground mt-1 truncate hover:underline">{field.name}</span>
+                         </a>
+                       )}
+                    </div>
                   ))}
                 </div>
               )}
               <div className="flex gap-2">
                 <AddLinkPopover onAddLink={handleAddLink} />
+                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                    <Paperclip className="mr-2 h-4 w-4" /> Upload File
+                </Button>
+                <Input type="file" multiple ref={fileInputRef} onChange={handleFileChange} className="hidden" />
               </div>
             </div>
+
             <DialogFooter className="sm:justify-between pt-4">
               <div>{taskToEdit && (<Button type="button" variant="destructive" onClick={handleDelete}><Trash2 className="mr-2 h-4 w-4" />Delete</Button>)}</div>
               <div className="flex gap-2">

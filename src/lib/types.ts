@@ -15,13 +15,18 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'health', name: 'Health & Fitness', color: '#ef4444' },
 ];
 
-export interface Attachment {
+export type Attachment = {
   id: string;
   name: string;
-  url: string; 
+} & ({
   type: 'link';
-  fileType?: string; 
-}
+  url: string;
+} | {
+  type: 'file';
+  dataUri: string;
+  fileType: string;
+});
+
 
 export interface PriorityParams {
   urgency: number;
@@ -57,6 +62,10 @@ export interface Settings {
     Morning: { start: number; end: number };
     Midday: { start: number; end: number };
     Evening: { start: number; end: number };
+  };
+  dailyObjectives: {
+    tasks: number;
+    hours: number;
   };
   categories: Category[];
   tags: string[];
