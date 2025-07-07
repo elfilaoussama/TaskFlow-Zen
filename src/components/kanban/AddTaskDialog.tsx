@@ -54,9 +54,9 @@ const attachmentSchema = z.union([
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
+  description: z.string(),
   categoryId: z.string().min(1, 'Category is required'),
-  tags: z.array(z.string()).optional(),
+  tags: z.array(z.string()),
   deadline: z.date(),
   priority: z.object({
     urgency: z.coerce.number().min(1).max(10),
