@@ -1,40 +1,37 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
-import Image from 'next/image';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { v4 as uuidv4 } from 'uuid';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogFooter,
-  DialogClose,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
+  SelectTrigger
 } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Trash2, Link, X, Paperclip, File as FileIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { useTaskContext } from '@/contexts/TaskContext';
-import { Task, Attachment } from '@/lib/types';
-import { useSound } from '@/hooks/use-sound';
 import { Slider } from '@/components/ui/slider';
-import { Badge } from '../ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { useTaskContext } from '@/contexts/TaskContext';
+import { useSound } from '@/hooks/use-sound';
+import { Task } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
+import { CalendarIcon, File as FileIcon, Link, Paperclip, Trash2, X } from 'lucide-react';
+import Image from 'next/image';
+import React, { useEffect, useRef, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { v4 as uuidv4 } from 'uuid';
+import * as z from 'zod';
 
 const attachmentSchema = z.union([
   z.object({
@@ -91,8 +88,9 @@ const AddLinkPopover = ({ onAddLink }: { onAddLink: (name: string, url: string) 
 
     return (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
-            <PopoverTrigger asChild>
-                <Button type="button" variant="outline" size="sm"><Link className="mr-2 h-4 w-4" /> Add Link</Button>
+            <PopoverTrigger asChild><Button type="button" variant="outline" size="sm">
+                    <Link className="mr-2 h-4 w-4" /> Add Link
+                </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80">
                 <div className="grid gap-4">
@@ -204,7 +202,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
             <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <FormLabel>Description</FormLabel> <FormControl> <Textarea placeholder="Add more details about the task" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="categoryId" render={({ field }) => ( <FormItem> <FormLabel>Category</FormLabel> <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}> <FormControl> <SelectTrigger> <span>{field.value ? settings.categories.find(c => c.id === field.value)?.name : "Select a category"}</span> </SelectTrigger> </FormControl> <SelectContent> {settings.categories.map(cat => ( <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
-              <FormField control={form.control} name="deadline" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Deadline</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant="outline" className={cn( 'w-full justify-start text-left font-normal', !field.value && 'text-muted-foreground' )}> <div className="flex items-center justify-between w-full"> <span>{field.value ? format(field.value, 'PPP') : 'Pick a date'}</span> <CalendarIcon className="h-4 w-4 opacity-50" /> </div> </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0" align="start"> <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date(new Date().setDate(new Date().getDate() -1))} initialFocus /> </PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
+              <FormField control={form.control} name="deadline" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Deadline</FormLabel> <Popover> <PopoverTrigger asChild><FormControl> <Button variant="outline" className={cn( 'w-full justify-start text-left font-normal', !field.value && 'text-muted-foreground' )}> <div className="flex items-center justify-between w-full"> <span>{field.value ? format(field.value, 'PPP') : 'Pick a date'}</span> <CalendarIcon className="h-4 w-4 opacity-50" /> </div> </Button> </FormControl></PopoverTrigger> <PopoverContent className="w-auto p-0" align="start"> <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date(new Date().setDate(new Date().getDate() -1))} initialFocus /> </PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
             </div>
             
             <FormField
@@ -287,9 +285,9 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
             </div>
 
             <DialogFooter className="sm:justify-between pt-4">
-              <div>{taskToEdit && (<Button type="button" variant="destructive" onClick={handleDelete}><Trash2 className="mr-2 h-4 w-4" />Delete</Button>)}</div>
+              <div>{taskToEdit && <Button type="button" variant="destructive" onClick={handleDelete}><Trash2 className="mr-2 h-4 w-4" />Delete</Button>}</div>
               <div className="flex gap-2">
-                <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>Cancel</Button>
                 <Button type="submit">{taskToEdit ? 'Save Changes' : 'Create Task'}</Button>
               </div>
             </DialogFooter>
