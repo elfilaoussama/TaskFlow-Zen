@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
-import { Task } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { GripVertical, Calendar, CheckCircle2, Bot, PlusCircle, Undo2, Star, Clock, Paperclip } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTaskContext } from '@/contexts/TaskContext';
-import { AddTaskDialog } from './AddTaskDialog';
 import { useSound } from '@/hooks/use-sound';
+import { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
+import { Bot, Calendar, CheckCircle2, Clock, GripVertical, Paperclip, PlusCircle, Star, Undo2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { AddTaskDialog } from './AddTaskDialog';
 
 interface TaskCardProps {
   task: Task;
@@ -84,7 +84,9 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
           {boardType === 'daily' && <GripVertical className="h-5 w-5 text-muted-foreground" />}
         </CardHeader>
         <CardContent className="p-4 pt-0 text-sm text-muted-foreground space-y-2">
-            {task.description && <p className="truncate mb-1">{task.description}</p>}
+            {task.description && (
+              <p className="line-clamp-2 mb-1 text-sm max-w-full">{task.description}</p>
+            )}
             <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1.5" title={`Deadline: ${new Date(task.deadline).toLocaleDateString()}`}>
                     <Calendar className="h-3 w-3" /> 
