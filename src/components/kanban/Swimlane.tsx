@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Task, SwimlaneId } from '@/lib/types';
 import { TaskCard } from './TaskCard';
 import { useTaskContext } from '@/contexts/TaskContext';
@@ -15,6 +15,18 @@ interface SwimlaneProps {
   boardType: 'general' | 'daily';
 }
 
+const calculatePriorityScore = (task: Task, weights: any) => {
+    const { urgency, importance, impact } = task.priority;
+    const deadlineDate = new Date(task.deadline);
+    const now = new Date();
+    const daysUntilDeadline = (deadlineDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
+    let deadlineFactor = 1;
+    if (daysUntilDeadline < 1) deadlineFactor = 10;
+    else if (daysUntilDeadline < 3) deadlineFactor = 7;
+    else if (daysUntilDeadline < 7) deadlineFactor = 4;
+    return urgency * weights.urgency + importance * weights.importance + impact * weights.impact + deadlineFactor * weights.deadline;
+};
+
 export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
   const { moveTask, settings } = useTaskContext();
   const [isDragOver, setIsDragOver] = useState(false);
@@ -25,6 +37,13 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const sortedTasks = useMemo(() => {
+    if (boardType === 'daily') {
+        return [...tasks].sort((a, b) => calculatePriorityScore(b, settings.priorityWeights) - calculatePriorityScore(a, settings.priorityWeights));
+    }
+    return tasks;
+  }, [tasks, settings.priorityWeights, boardType]);
 
 
   useEffect(() => {
@@ -67,7 +86,7 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('taskId');
     if (taskId) {
-      moveTask(taskId, id, tasks.length);
+      moveTask(taskId, id, 0);
       playSound('drop');
     }
     setIsDragOver(false);
@@ -99,12 +118,12 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
         </div>
         <span className="text-sm font-medium text-muted-foreground bg-background px-2 py-1 rounded-full">{tasks.length}</span>
       </div>
-      <div className="h-full min-h-[200px]">
-        {tasks.map(task => (
+      <div className="min-h-[200px]">
+        {sortedTasks.map(task => (
           <TaskCard key={task.id} task={task} boardType={boardType} />
         ))}
-         {tasks.length === 0 && (
-          <div className="flex items-center justify-center h-full text-sm text-muted-foreground border-2 border-dashed border-border rounded-lg p-4">
+        {tasks.length === 0 && (
+          <div className="flex items-center justify-center min-h-[200px] text-sm text-muted-foreground border-2 border-dashed border-border rounded-lg p-4">
             Drop tasks here
           </div>
         )}
