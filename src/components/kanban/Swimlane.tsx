@@ -82,7 +82,7 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
     setIsDragOver(false);
   };
 
-  return (
+    return (
     <div
       onDrop={handleDrop}
       onDragOver={handleDragOver}
@@ -99,12 +99,12 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
         </div>
         <span className="text-sm font-medium text-muted-foreground bg-background px-2 py-1 rounded-full">{tasks.length}</span>
       </div>
-      <div className="h-full min-h-[200px]">
+      <div className="min-h-[200px]">
         {tasks.map(task => (
           <TaskCard key={task.id} task={task} boardType={boardType} />
         ))}
-         {tasks.length === 0 && (
-          <div className="flex items-center justify-center h-full text-sm text-muted-foreground border-2 border-dashed border-border rounded-lg p-4">
+        {tasks.length === 0 && (
+          <div className="flex items-center justify-center min-h-[200px] text-sm text-muted-foreground border-2 border-dashed border-border rounded-lg p-4">
             Drop tasks here
           </div>
         )}
