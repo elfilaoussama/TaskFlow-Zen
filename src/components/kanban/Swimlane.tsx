@@ -119,7 +119,7 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
         <span className="text-sm font-medium text-muted-foreground bg-background px-2 py-1 rounded-full">{tasks.length}</span>
       </div>
       <div className="min-h-[200px]">
-        {sortedTasks.map(task => (
+        {tasks.map(task => (
           <TaskCard key={task.id} task={task} boardType={boardType} />
         ))}
         {tasks.length === 0 && (
@@ -129,5 +129,5 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
         )}
       </div>
     </div>
-  );
+);
 }
