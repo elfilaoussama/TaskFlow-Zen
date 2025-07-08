@@ -213,7 +213,18 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, [tasks, updateTask, toast]);
 
     const clearDailyTasks = useCallback(() => {
-        setTasks(prev => prev.map(t => (t.isDaily ? { ...t, isDaily: false, swimlane: 'Morning' } : t)));
+        setTasks(prev => prev.map(t => {
+            if (t.isDaily) {
+                if (t.status === 'completed') {
+                    // For completed tasks, just move them to the general pool but preserve swimlane for analytics.
+                    return { ...t, isDaily: false };
+                } else {
+                    // For todo tasks, move to general pool and reset swimlane.
+                    return { ...t, isDaily: false, swimlane: 'Morning' };
+                }
+            }
+            return t;
+        }));
         toast({ title: 'Daily Board Cleared', description: 'All daily tasks moved back to the general pool.' });
     }, [toast]);
 

@@ -4,10 +4,10 @@ import React, { useMemo } from 'react';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  BarChart, Bar, ScatterChart, Scatter,
+  BarChart, Bar, ScatterChart, Scatter, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, ZAxis
 } from 'recharts';
-import { parseISO } from 'date-fns';
+import { parseISO, subDays, format, eachDayOfInterval, isSameDay } from 'date-fns';
 import { Task } from '@/lib/types';
 
 const calculatePriorityScore = (task: Task, weights: any) => {
@@ -45,6 +45,23 @@ export default function AnalyticsPage() {
         }
     })
   }, [completedTasks, settings.priorityWeights]);
+
+  const progressData = useMemo(() => {
+    const last30Days = eachDayOfInterval({
+        start: subDays(new Date(), 29),
+        end: new Date()
+    });
+    
+    return last30Days.map(day => {
+        const tasksOnDay = completedTasks.filter(task => isSameDay(parseISO(task.completedAt!), day));
+        const totalDuration = tasksOnDay.reduce((sum, task) => sum + (task.duration || 0), 0);
+        return {
+            date: format(day, 'MMM d'),
+            'Tasks Completed': tasksOnDay.length,
+            'Hours Worked': parseFloat((totalDuration / 60).toFixed(2)),
+        }
+    })
+  }, [completedTasks]);
 
 
   return (
@@ -87,6 +104,23 @@ export default function AnalyticsPage() {
                             <Scatter name="Midday" data={priorityVsDuration.filter(d => d.swimlane === 'Midday')} fill="hsl(var(--chart-2))" />
                             <Scatter name="Evening" data={priorityVsDuration.filter(d => d.swimlane === 'Evening')} fill="hsl(var(--chart-3))" />
                         </ScatterChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+            <Card className="lg:col-span-2">
+                <CardHeader><CardTitle>Progress (Last 30 Days)</CardTitle></CardHeader>
+                <CardContent className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={progressData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" />
+                            <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" allowDecimals={false} />
+                            <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" />
+                            <Tooltip />
+                            <Legend />
+                            <Area yAxisId="left" type="monotone" dataKey="Tasks Completed" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.3} />
+                            <Area yAxisId="right" type="monotone" dataKey="Hours Worked" stroke="hsl(var(--chart-2))" fill="hsl(var(--chart-2))" fillOpacity={0.3} />
+                        </AreaChart>
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
