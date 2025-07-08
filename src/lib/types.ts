@@ -63,10 +63,6 @@ export interface Settings {
     Midday: { start: number; end: number };
     Evening: { start: number; end: number };
   };
-  dailyObjectives: {
-    tasks: number;
-    hours: number;
-  };
   categories: Category[];
   tags: string[];
   timezones: { id: string; name: string }[];

@@ -117,8 +117,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </SidebarContent>
         <SidebarFooter>
           <div className="flex items-center gap-2 group-data-[collapsible=icon]:flex-col">
-            <Button variant="outline" size="sm" onClick={handleImport} className="w-full"><Download className="mr-2 h-4 w-4" /> <span className="group-data-[collapsible=icon]:hidden">Import</span></Button>
-            <Button variant="outline" size="sm" onClick={handleExport} className="w-full"><Upload className="mr-2 h-4 w-4" /> <span className="group-data-[collapsible=icon]:hidden">Export</span></Button>
+            <Button variant="outline" size="sm" onClick={handleImport} className="w-full"><Upload className="mr-2 h-4 w-4" /> <span className="group-data-[collapsible=icon]:hidden">Import</span></Button>
+            <Button variant="outline" size="sm" onClick={handleExport} className="w-full"><Download className="mr-2 h-4 w-4" /> <span className="group-data-[collapsible=icon]:hidden">Export</span></Button>
           </div>
           <ThemeToggle />
         </SidebarFooter>

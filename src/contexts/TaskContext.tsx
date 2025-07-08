@@ -32,10 +32,6 @@ const defaultSettings: Settings = {
     Midday: { start: 12, end: 16 },
     Evening: { start: 18, end: 24 },
   },
-  dailyObjectives: {
-    tasks: 5,
-    hours: 6,
-  },
   categories: DEFAULT_CATEGORIES,
   tags: ['Work', 'Personal', 'Urgent'],
   timezones: [{ id: 'local', name: 'Local Time' }],

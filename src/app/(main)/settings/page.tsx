@@ -119,15 +119,6 @@ export default function SettingsPage() {
       priorityWeights: { ...settings.priorityWeights, [name]: value[0] },
     });
   };
-  
-  const handleObjectiveChange = (name: 'tasks' | 'hours', value: string) => {
-    const numValue = parseInt(value, 10);
-    if (!isNaN(numValue) && numValue >= 0) {
-        updateSettings({
-            dailyObjectives: { ...settings.dailyObjectives, [name]: numValue }
-        })
-    }
-  }
 
   const handleSoundToggle = (enabled: boolean) => {
     updateSettings({ soundEnabled: enabled });
@@ -195,33 +186,6 @@ export default function SettingsPage() {
 
             <Separator />
             
-             <Card>
-                <CardHeader>
-                    <CardTitle>Daily Objectives</CardTitle>
-                    <CardDescription>Set your daily goals to track in analytics.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <Label htmlFor="daily-tasks" className="w-40">Tasks to Complete</Label>
-                        <Input id="daily-tasks" type="number" min="0"
-                            value={settings.dailyObjectives.tasks}
-                            onChange={(e) => handleObjectiveChange('tasks', e.target.value)}
-                            className="w-24"
-                        />
-                    </div>
-                     <div className="flex items-center gap-4">
-                        <Label htmlFor="daily-hours" className="w-40">Hours of Work</Label>
-                        <Input id="daily-hours" type="number" min="0"
-                            value={settings.dailyObjectives.hours}
-                            onChange={(e) => handleObjectiveChange('hours', e.target.value)}
-                            className="w-24"
-                        />
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Separator />
-
             <Card>
                 <CardHeader>
                     <CardTitle>Priority Weights</CardTitle>

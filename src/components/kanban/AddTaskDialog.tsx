@@ -34,7 +34,6 @@ import { useTaskContext } from '@/contexts/TaskContext';
 import { Task, Attachment } from '@/lib/types';
 import { useSound } from '@/hooks/use-sound';
 import { Slider } from '@/components/ui/slider';
-import { Badge } from '../ui/badge';
 
 const attachmentSchema = z.union([
   z.object({
@@ -91,8 +90,9 @@ const AddLinkPopover = ({ onAddLink }: { onAddLink: (name: string, url: string) 
 
     return (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
-            <PopoverTrigger asChild>
-                <Button type="button" variant="outline" size="sm"><Link className="mr-2 h-4 w-4" /> Add Link</Button>
+            <PopoverTrigger asChild><Button type="button" variant="outline" size="sm">
+                    <Link className="mr-2 h-4 w-4" /> Add Link
+                </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80">
                 <div className="grid gap-4">
@@ -127,6 +127,9 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
   });
   
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "attachments" });
+  
+  const fileAttachments = fields.filter(field => field.type === 'file');
+  const linkAttachments = fields.filter(field => field.type === 'link');
 
   useEffect(() => {
     if (taskToEdit) {
@@ -193,6 +196,13 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
   const handleAddLink = (name: string, url: string) => {
       append({ id: uuidv4(), name, url, type: 'link' });
   }
+  
+  const handleRemoveAttachment = (id: string) => {
+    const index = fields.findIndex(field => field.id === id);
+    if (index > -1) {
+        remove(index);
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -204,7 +214,14 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
             <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <FormLabel>Description</FormLabel> <FormControl> <Textarea placeholder="Add more details about the task" {...field} /> </FormControl> <FormMessage /> </FormItem> )}/>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="categoryId" render={({ field }) => ( <FormItem> <FormLabel>Category</FormLabel> <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}> <FormControl> <SelectTrigger> <span>{field.value ? settings.categories.find(c => c.id === field.value)?.name : "Select a category"}</span> </SelectTrigger> </FormControl> <SelectContent> {settings.categories.map(cat => ( <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
-              <FormField control={form.control} name="deadline" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Deadline</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant="outline" className={cn( 'w-full justify-start text-left font-normal', !field.value && 'text-muted-foreground' )}> <div className="flex items-center justify-between w-full"> <span>{field.value ? format(field.value, 'PPP') : 'Pick a date'}</span> <CalendarIcon className="h-4 w-4 opacity-50" /> </div> </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0" align="start"> <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date(new Date().setDate(new Date().getDate() -1))} initialFocus /> </PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
+              <FormField control={form.control} name="deadline" render={({ field }) => ( <FormItem className="flex flex-col"> <FormLabel>Deadline</FormLabel> <Popover> <PopoverTrigger asChild><FormControl>
+                <Button variant="outline" className={cn('w-full justify-start text-left font-normal', !field.value && 'text-muted-foreground' )}>
+                    <div className="flex items-center justify-between w-full">
+                        <span>{field.value ? format(field.value, 'PPP') : 'Pick a date'}</span>
+                        <CalendarIcon className="h-4 w-4 opacity-50" />
+                    </div>
+                </Button>
+              </FormControl></PopoverTrigger> <PopoverContent className="w-auto p-0" align="start"> <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={date => date < new Date(new Date().setDate(new Date().getDate() -1))} initialFocus /> </PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
             </div>
             
             <FormField
@@ -218,22 +235,19 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                       placeholder="e.g., 60"
                       type="text"
                       inputMode="numeric"
-                      pattern="[0-9]*"
+                      value={field.value ?? ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const parsed = parseInt(value, 10);
+                        if (value === '') {
+                          field.onChange(undefined);
+                        } else if (!isNaN(parsed) && parsed >= 0) {
+                          field.onChange(parsed);
+                        }
+                      }}
                       name={field.name}
                       onBlur={field.onBlur}
                       ref={field.ref}
-                      value={field.value ?? ''}
-                      onChange={(e) => {
-                        const stringValue = e.target.value;
-                        if (stringValue === '') {
-                          field.onChange(undefined);
-                          return;
-                        }
-                        const numValue = parseInt(stringValue, 10);
-                        if (!isNaN(numValue) && numValue >= 0) {
-                          field.onChange(numValue);
-                        }
-                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -252,11 +266,12 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
             
             <div className="space-y-2">
               <FormLabel>Attachments</FormLabel>
-              {fields.length > 0 && (
+              
+              {fileAttachments.length > 0 && (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                  {fields.map((field, index) => (
+                  {fileAttachments.map((field) => (
                     <div key={field.id} className="relative group aspect-square border rounded-md flex items-center justify-center">
-                       <button type="button" onClick={() => remove(index)} className="absolute -top-2 -right-2 z-10 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/80 p-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                       <button type="button" onClick={() => handleRemoveAttachment(field.id)} className="absolute -top-2 -right-2 z-10 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/80 p-1 opacity-50 group-hover:opacity-100 transition-opacity">
                          <X className="h-3 w-3" />
                        </button>
                        {field.type === 'file' && field.fileType.startsWith('image/') ? (
@@ -267,16 +282,27 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                            <span className="text-xs text-muted-foreground mt-1 truncate">{field.name}</span>
                          </div>
                        )}
-                       {field.type === 'link' && (
-                         <a href={field.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center text-center p-1">
-                           <Link className="h-6 w-6 text-muted-foreground" />
-                           <span className="text-xs text-muted-foreground mt-1 truncate hover:underline">{field.name}</span>
-                         </a>
-                       )}
                     </div>
                   ))}
                 </div>
               )}
+
+              {linkAttachments.length > 0 && (
+                <div className="space-y-2 pt-2">
+                    {linkAttachments.map((field) => (
+                         <div key={field.id} className="flex items-center justify-between p-2 text-sm border rounded-md">
+                           <a href={field.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline truncate">
+                               <Link className="h-4 w-4 flex-shrink-0" />
+                               <span className="truncate">{field.name}</span>
+                           </a>
+                           <button type="button" onClick={() => handleRemoveAttachment(field.id)} className="p-1 text-muted-foreground hover:text-destructive transition-colors">
+                               <X className="h-4 w-4" />
+                           </button>
+                         </div>
+                    ))}
+                </div>
+              )}
+
               <div className="flex gap-2">
                 <AddLinkPopover onAddLink={handleAddLink} />
                 <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
@@ -287,9 +313,9 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
             </div>
 
             <DialogFooter className="sm:justify-between pt-4">
-              <div>{taskToEdit && (<Button type="button" variant="destructive" onClick={handleDelete}><Trash2 className="mr-2 h-4 w-4" />Delete</Button>)}</div>
+              <div>{taskToEdit && <Button type="button" variant="destructive" onClick={handleDelete}><Trash2 className="mr-2 h-4 w-4" />Delete</Button>}</div>
               <div className="flex gap-2">
-                <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>Cancel</Button>
                 <Button type="submit">{taskToEdit ? 'Save Changes' : 'Create Task'}</Button>
               </div>
             </DialogFooter>
