@@ -215,15 +215,24 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                   <FormLabel>Estimated Duration (minutes)</FormLabel>
                   <FormControl>
                     <Input
-                      type="number"
                       placeholder="e.g., 60"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       name={field.name}
                       onBlur={field.onBlur}
                       ref={field.ref}
                       value={field.value ?? ''}
                       onChange={(e) => {
-                        const value = e.target.valueAsNumber;
-                        field.onChange(isNaN(value) ? undefined : value);
+                        const stringValue = e.target.value;
+                        if (stringValue === '') {
+                          field.onChange(undefined);
+                          return;
+                        }
+                        const numValue = parseInt(stringValue, 10);
+                        if (!isNaN(numValue) && numValue >= 0) {
+                          field.onChange(numValue);
+                        }
                       }}
                     />
                   </FormControl>
