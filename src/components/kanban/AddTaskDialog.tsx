@@ -218,9 +218,9 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                       type="number"
                       placeholder="e.g., 60"
                       value={field.value ?? ''}
-                      onChange={e => {
-                        const value = e.target.valueAsNumber;
-                        field.onChange(isNaN(value) ? undefined : value);
+                      onChange={(e) => {
+                        const num = parseInt(e.target.value, 10);
+                        field.onChange(isNaN(num) ? undefined : num);
                       }}
                       name={field.name}
                       onBlur={field.onBlur}
