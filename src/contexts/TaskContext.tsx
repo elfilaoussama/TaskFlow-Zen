@@ -5,7 +5,7 @@ import { Task, Settings, SwimlaneId, Category, DEFAULT_CATEGORIES, Attachment } 
 import { useToast } from '@/hooks/use-toast';
 import { getTaskCategory } from '@/app/actions';
 import { useAuth } from './AuthContext';
-import { db } from '@/lib/firebase';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 import { collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc, writeBatch, query } from 'firebase/firestore';
 
 interface TaskContextType {
@@ -50,7 +50,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
+    if (user && isFirebaseConfigured && db) {
       setIsLoading(true);
       
       const settingsRef = doc(db, 'users', user.uid);
@@ -79,7 +79,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
       };
 
     } else {
-      // No user, clear data
+      // No user or firebase not configured, clear data
       setTasks([]);
       setSettings(defaultSettings);
       setIsLoading(false);
@@ -87,7 +87,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const addTask = useCallback(async (taskData: Omit<Task, 'id' | 'createdAt' | 'status' | 'isDaily' | 'swimlane' | 'priority'> & { priority?: Partial<Task['priority']> }) => {
-    if (!user) return;
+    if (!user || !db) return;
     const newTask: Omit<Task, 'id'> = {
       ...taskData,
       createdAt: new Date().toISOString(),
@@ -105,13 +105,13 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, [user, toast]);
   
   const updateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
-    if (!user) return;
+    if (!user || !db) return;
     const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
     await updateDoc(taskRef, updates);
   }, [user]);
 
   const deleteTask = useCallback(async (taskId: string) => {
-    if (!user) return;
+    if (!user || !db) return;
     const taskToDelete = tasks.find(t => t.id === taskId);
     const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
     await deleteDoc(taskRef);
@@ -121,12 +121,12 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, [user, tasks, toast]);
 
   const moveTask = useCallback(async (taskId: string, newSwimlane: SwimlaneId) => {
-    if (!user) return;
+    if (!user || !db) return;
     await updateTask(taskId, { swimlane: newSwimlane });
   }, [user, updateTask]);
   
   const moveFromGeneralToDaily = useCallback(async (taskId: string) => {
-    if (!user) return;
+    if (!user || !db) return;
     const task = tasks.find((t) => t.id === taskId);
     if (task) {
       await updateTask(taskId, { isDaily: true, swimlane: 'Morning' });
@@ -138,7 +138,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, [user, tasks, toast, updateTask]);
 
   const updateSettings = useCallback(async (newSettings: Partial<Settings>) => {
-    if (!user) return;
+    if (!user || !db) return;
     const newFullSettings = { ...settings, ...newSettings };
     const userSettingsRef = doc(db, 'users', user.uid);
     await setDoc(userSettingsRef, { settings: newFullSettings }, { merge: true });
@@ -146,19 +146,19 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, [user, settings, toast]);
   
   const addCategory = useCallback(async (category: Omit<Category, 'id'>) => {
-    if (!user) return;
+    if (!user || !db) return;
     const newCategory = { ...category, id: doc(collection(db, 'tmp')).id }; // local unique id
     await updateSettings({ categories: [...settings.categories, newCategory] });
   }, [user, settings.categories, updateSettings]);
 
   const updateCategory = useCallback(async (categoryId: string, updates: Partial<Category>) => {
-    if (!user) return;
+    if (!user || !db) return;
     const newCategories = settings.categories.map(c => c.id === categoryId ? { ...c, ...updates } : c);
     await updateSettings({ categories: newCategories });
   }, [user, settings.categories, updateSettings]);
   
   const deleteCategory = useCallback(async (categoryId: string) => {
-    if (!user) return;
+    if (!user || !db) return;
     if (tasks.some(t => t.categoryId === categoryId)) {
       toast({ title: "Cannot Delete Category", description: "Please reassign tasks from this category before deleting it.", variant: "destructive" });
       return;
@@ -172,7 +172,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, [user, tasks, settings.categories, toast, updateSettings]);
 
   const importData = useCallback(async (dataString: string) => {
-    if (!user) return;
+    if (!user || !db) return;
     try {
       const data = JSON.parse(dataString);
       if (data.tasks && Array.isArray(data.tasks) && data.settings) {
@@ -230,7 +230,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, [tasks, updateTask, toast]);
 
     const clearDailyTasks = useCallback(async () => {
-        if (!user) return;
+        if (!user || !db) return;
         const batch = writeBatch(db);
         tasks.forEach(t => {
             if (t.isDaily) {
