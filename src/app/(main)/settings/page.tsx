@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { HexColorPicker } from 'react-colorful';
 import { Category, SwimlaneId, SWIMLANES } from '@/lib/types';
-import { PlusCircle, Trash2, Edit } from 'lucide-react';
+import { PlusCircle, Trash2, Edit, Upload, Download } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 const categorySchema = z.object({
@@ -109,7 +109,7 @@ const CategoryDialog = ({
 };
 
 export default function SettingsPage() {
-  const { settings, updateSettings, deleteCategory } = useTaskContext();
+  const { settings, updateSettings, deleteCategory, importData, exportData } = useTaskContext();
   const playSound = useSound();
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | undefined>(undefined);
@@ -149,13 +149,42 @@ export default function SettingsPage() {
       },
     });
   };
+  
+  const handleExport = () => {
+    const data = exportData();
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tassko-backup.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = e => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = event => {
+          const content = event.target?.result as string;
+          importData(content);
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
+  };
 
   return (
     <>
       <div className="flex flex-col h-full p-4 md:p-6">
         <header className="pb-4 border-b">
           <h1 className="text-2xl font-bold font-headline">Settings</h1>
-          <p className="text-muted-foreground">Customize your TaskFlow Zen experience.</p>
+          <p className="text-muted-foreground">Customize your Tassko experience.</p>
         </header>
         <main className="flex-1 overflow-y-auto pt-6 space-y-8">
             <Card>
@@ -240,6 +269,21 @@ export default function SettingsPage() {
                             </div>
                         </div>
                     ))}
+                </CardContent>
+            </Card>
+            
+            <Separator />
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Data Management</CardTitle>
+                    <CardDescription>Backup your data to a JSON file or restore from a backup.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex gap-4">
+                        <Button variant="outline" onClick={handleImport}><Upload className="mr-2 h-4 w-4" /> Import from File</Button>
+                        <Button variant="outline" onClick={handleExport}><Download className="mr-2 h-4 w-4" /> Export to File</Button>
+                    </div>
                 </CardContent>
             </Card>
             

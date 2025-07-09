@@ -2,18 +2,22 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTaskContext } from '@/contexts/TaskContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   BarChart, Bar, ScatterChart, Scatter, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, ZAxis
 } from 'recharts';
-import { parseISO, subDays, format, eachDayOfInterval, isSameDay } from 'date-fns';
+import { parseISO, subDays, format, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { Task } from '@/lib/types';
 import { calculatePriorityScore } from '@/lib/priority';
+
+type TimeRange = 'daily' | 'weekly' | 'monthly';
 
 export default function AnalyticsPage() {
   const { tasks, settings } = useTaskContext();
   const [isClient, setIsClient] = useState(false);
+  const [timeRange, setTimeRange] = useState<TimeRange>('daily');
 
   useEffect(() => {
     setIsClient(true);
@@ -42,21 +46,58 @@ export default function AnalyticsPage() {
   }, [completedTasks, settings.priorityWeights, isClient]);
 
   const progressData = useMemo(() => {
-    const last30Days = eachDayOfInterval({
-        start: subDays(new Date(), 29),
-        end: new Date()
+    const now = new Date();
+    let interval;
+
+    switch(timeRange) {
+        case 'monthly':
+            interval = { start: subDays(now, 365), end: now };
+            break;
+        case 'weekly':
+            interval = { start: subDays(now, 90), end: now };
+            break;
+        case 'daily':
+        default:
+            interval = { start: subDays(now, 29), end: now };
+            break;
+    }
+
+    const tasksInInterval = completedTasks.filter(task => {
+        const completedDate = parseISO(task.completedAt!);
+        return completedDate >= interval.start && completedDate <= interval.end;
     });
-    
-    return last30Days.map(day => {
-        const tasksOnDay = completedTasks.filter(task => isSameDay(parseISO(task.completedAt!), day));
-        const totalDuration = tasksOnDay.reduce((sum, task) => sum + (task.duration || 0), 0);
-        return {
-            date: format(day, 'MMM d'),
-            'Tasks Completed': tasksOnDay.length,
-            'Hours Worked': parseFloat((totalDuration / 60).toFixed(2)),
+
+    const groupedData = tasksInInterval.reduce((acc, task) => {
+        const completedDate = parseISO(task.completedAt!);
+        let key = '';
+
+        if (timeRange === 'daily') {
+            key = format(completedDate, 'yyyy-MM-dd');
+        } else if (timeRange === 'weekly') {
+            key = format(startOfWeek(completedDate), 'yyyy-MM-dd');
+        } else { // monthly
+            key = format(startOfMonth(completedDate), 'yyyy-MM');
         }
-    })
-  }, [completedTasks]);
+        
+        if (!acc[key]) {
+            acc[key] = {
+                'Tasks Completed': 0,
+                'Hours Worked': 0,
+            };
+        }
+        acc[key]['Tasks Completed'] += 1;
+        acc[key]['Hours Worked'] += (task.duration || 0) / 60;
+
+        return acc;
+    }, {} as Record<string, { 'Tasks Completed': number; 'Hours Worked': number }>);
+    
+    return Object.entries(groupedData).map(([date, data]) => ({
+        date: timeRange === 'monthly' ? format(parseISO(date), 'MMM yy') : format(parseISO(date), 'MMM d'),
+        'Tasks Completed': data['Tasks Completed'],
+        'Hours Worked': parseFloat(data['Hours Worked'].toFixed(2)),
+    })).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  }, [completedTasks, timeRange]);
 
 
   return (
@@ -103,7 +144,19 @@ export default function AnalyticsPage() {
                 </CardContent>
             </Card>
             <Card className="lg:col-span-2">
-                <CardHeader><CardTitle>Progress (Last 30 Days)</CardTitle></CardHeader>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>Progress</CardTitle>
+                            <CardDescription>Your productivity over time.</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-1 rounded-md bg-muted p-1">
+                            <Button variant={timeRange === 'daily' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTimeRange('daily')} className="h-7 px-3">Daily</Button>
+                            <Button variant={timeRange === 'weekly' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTimeRange('weekly')} className="h-7 px-3">Weekly</Button>
+                            <Button variant={timeRange === 'monthly' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTimeRange('monthly')} className="h-7 px-3">Monthly</Button>
+                        </div>
+                    </div>
+                </CardHeader>
                 <CardContent className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={progressData}>

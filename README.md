@@ -1,5 +1,23 @@
-.1# Firebase Studio
+# Tassko
 
-This is a NextJS starter in Firebase Studio.
+This is a Next.js project bootstrapped with `create-next-app`.
 
-To get started, take a look at src/app/page.tsx.
+## Getting Started
+
+First, populate the `.env` file with your Firebase project credentials. You can find these in your Firebase project console settings.
+
+Then, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.

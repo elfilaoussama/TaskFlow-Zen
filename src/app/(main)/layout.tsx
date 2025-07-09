@@ -1,9 +1,38 @@
+"use client";
+
 import { AppShell } from "@/components/layout/AppShell";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || !user) {
+    // This loading state is shown while auth state is being checked.
+    // The main app loader is in AuthProvider for the initial load.
+    return (
+       <div className="flex h-screen w-screen items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-4">
+              <p className="text-xl font-semibold text-primary">Tassko</p>
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <p className="text-muted-foreground">Verifying session...</p>
+          </div>
+       </div>
+    );
+  }
+
   return <AppShell>{children}</AppShell>;
 }

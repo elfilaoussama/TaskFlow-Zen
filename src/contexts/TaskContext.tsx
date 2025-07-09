@@ -2,9 +2,11 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Task, Settings, SwimlaneId, Category, DEFAULT_CATEGORIES, Attachment } from '@/lib/types';
-import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '@/hooks/use-toast';
 import { getTaskCategory } from '@/app/actions';
+import { useAuth } from './AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc, writeBatch, query } from 'firebase/firestore';
 
 interface TaskContextType {
   tasks: Task[];
@@ -18,7 +20,7 @@ interface TaskContextType {
   addCategory: (category: Omit<Category, 'id'>) => void;
   updateCategory: (categoryId: string, updates: Partial<Category>) => void;
   deleteCategory: (categoryId: string) => void;
-  importData: (data: string) => void;
+  importData: (data: string) => Promise<void>;
   exportData: () => string;
   categorizeTask: (taskId: string) => Promise<void>;
   clearDailyTasks: () => void;
@@ -41,146 +43,161 @@ const defaultSettings: Settings = {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export const TaskProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      const storedTasks = localStorage.getItem('tasks');
-      const storedSettings = localStorage.getItem('settings');
+    if (user) {
+      setIsLoading(true);
       
-      let loadedTasks = storedTasks ? JSON.parse(storedTasks) : [];
+      const settingsRef = doc(db, 'users', user.uid);
+      const settingsUnsub = onSnapshot(settingsRef, async (docSnap) => {
+        if (docSnap.exists() && docSnap.data().settings) {
+          setSettings(docSnap.data().settings);
+        } else {
+          await setDoc(settingsRef, { settings: defaultSettings }, { merge: true });
+          setSettings(defaultSettings);
+        }
+      });
       
-      const lastResetDate = localStorage.getItem('lastDailyReset');
-      const today = new Date().toISOString().split('T')[0];
-      if (lastResetDate !== today) {
-        loadedTasks = loadedTasks.map((t: Task) => (t.isDaily ? { ...t, isDaily: false } : t));
-        localStorage.setItem('lastDailyReset', today);
-      }
+      const tasksQuery = query(collection(db, 'users', user.uid, 'tasks'));
+      const tasksUnsub = onSnapshot(tasksQuery, (snapshot) => {
+        const tasksData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
+        setTasks(tasksData);
+        setIsLoading(false);
+      }, (error) => {
+          console.error("Error fetching tasks:", error);
+          setIsLoading(false);
+      });
 
-      setTasks(loadedTasks);
-      if (storedSettings) {
-        const parsedSettings = JSON.parse(storedSettings);
-        setSettings({ ...defaultSettings, ...parsedSettings });
-      }
+      return () => {
+        settingsUnsub();
+        tasksUnsub();
+      };
 
-    } catch (error) {
-      console.error("Failed to load data from localStorage", error);
-    } finally {
+    } else {
+      // No user, clear data
+      setTasks([]);
+      setSettings(defaultSettings);
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
-  }, [tasks, isLoading]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem('settings', JSON.stringify(settings));
-    }
-  }, [settings, isLoading]);
-
-  const addTask = useCallback((taskData: Omit<Task, 'id' | 'createdAt' | 'status' | 'isDaily' | 'swimlane'>) => {
-    const newTask: Task = {
+  const addTask = useCallback(async (taskData: Omit<Task, 'id' | 'createdAt' | 'status' | 'isDaily' | 'swimlane' | 'priority'> & { priority?: Partial<Task['priority']> }) => {
+    if (!user) return;
+    const newTask: Omit<Task, 'id'> = {
       ...taskData,
-      id: uuidv4(),
       createdAt: new Date().toISOString(),
       status: 'todo',
       isDaily: false,
       swimlane: 'Morning',
+      priority: {
+        urgency: taskData.priority?.urgency ?? 5,
+        importance: taskData.priority?.importance ?? 5,
+        impact: taskData.priority?.impact ?? 5,
+      },
     };
-    setTasks(prev => [...prev, newTask]);
+    await addDoc(collection(db, 'users', user.uid, 'tasks'), newTask);
     toast({ title: "Task Created", description: `"${newTask.title}" has been added.` });
-  }, [toast]);
+  }, [user, toast]);
+  
+  const updateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
+    if (!user) return;
+    const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
+    await updateDoc(taskRef, updates);
+  }, [user]);
 
-  const updateTask = useCallback((taskId: string, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t));
-  }, []);
-
-  const deleteTask = useCallback((taskId: string) => {
+  const deleteTask = useCallback(async (taskId: string) => {
+    if (!user) return;
     const taskToDelete = tasks.find(t => t.id === taskId);
-    setTasks(prev => prev.filter(t => t.id !== taskId));
+    const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
+    await deleteDoc(taskRef);
     if (taskToDelete) {
       toast({ title: "Task Deleted", description: `"${taskToDelete.title}" has been removed.`, variant: 'destructive' });
     }
-  }, [tasks, toast]);
+  }, [user, tasks, toast]);
 
-  const moveTask = useCallback((taskId: string, newSwimlane: SwimlaneId, newIndex: number) => {
-    setTasks(prevTasks => {
-      const task = prevTasks.find(t => t.id === taskId);
-      if (!task) return prevTasks;
-
-      const tasksWithout = prevTasks.filter(t => t.id !== taskId);
-      const tasksInNewSwimlane = tasksWithout.filter(t => t.swimlane === newSwimlane && t.isDaily);
-      const otherTasks = tasksWithout.filter(t => t.swimlane !== newSwimlane || !t.isDaily);
-      
-      tasksInNewSwimlane.splice(newIndex, 0, { ...task, swimlane: newSwimlane });
-      
-      return [...otherTasks, ...tasksInNewSwimlane];
-    });
-  }, []);
+  const moveTask = useCallback(async (taskId: string, newSwimlane: SwimlaneId) => {
+    if (!user) return;
+    await updateTask(taskId, { swimlane: newSwimlane });
+  }, [user, updateTask]);
   
-  const moveFromGeneralToDaily = (taskId: string) => {
+  const moveFromGeneralToDaily = useCallback(async (taskId: string) => {
+    if (!user) return;
     const task = tasks.find((t) => t.id === taskId);
     if (task) {
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === taskId ? { ...t, isDaily: true, swimlane: 'Morning' } : t
-        )
-      );
+      await updateTask(taskId, { isDaily: true, swimlane: 'Morning' });
       toast({
         title: 'Task Added to Daily Board',
         description: `"${task.title}" is now on your daily plan.`,
       });
-    } else {
-      toast({
-        title: 'Error',
-        description: 'Task not found.',
-        variant: 'destructive',
-      });
     }
-  };
+  }, [user, tasks, toast, updateTask]);
 
-
-  const updateSettings = useCallback((newSettings: Partial<Settings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+  const updateSettings = useCallback(async (newSettings: Partial<Settings>) => {
+    if (!user) return;
+    const newFullSettings = { ...settings, ...newSettings };
+    const userSettingsRef = doc(db, 'users', user.uid);
+    await setDoc(userSettingsRef, { settings: newFullSettings }, { merge: true });
     toast({ title: "Settings Updated" });
-  }, [toast]);
+  }, [user, settings, toast]);
   
-  const addCategory = useCallback((category: Omit<Category, 'id'>) => {
-      const newCategory = { ...category, id: uuidv4() };
-      updateSettings({ categories: [...settings.categories, newCategory] });
-  }, [settings.categories, updateSettings]);
+  const addCategory = useCallback(async (category: Omit<Category, 'id'>) => {
+    if (!user) return;
+    const newCategory = { ...category, id: doc(collection(db, 'tmp')).id }; // local unique id
+    await updateSettings({ categories: [...settings.categories, newCategory] });
+  }, [user, settings.categories, updateSettings]);
 
-  const updateCategory = useCallback((categoryId: string, updates: Partial<Category>) => {
-      const newCategories = settings.categories.map(c => c.id === categoryId ? { ...c, ...updates } : c);
-      updateSettings({ categories: newCategories });
-  }, [settings.categories, updateSettings]);
+  const updateCategory = useCallback(async (categoryId: string, updates: Partial<Category>) => {
+    if (!user) return;
+    const newCategories = settings.categories.map(c => c.id === categoryId ? { ...c, ...updates } : c);
+    await updateSettings({ categories: newCategories });
+  }, [user, settings.categories, updateSettings]);
   
-  const deleteCategory = useCallback((categoryId: string) => {
-      if (tasks.some(t => t.categoryId === categoryId)) {
-        toast({ title: "Cannot Delete Category", description: "Please reassign tasks from this category before deleting it.", variant: "destructive" });
-        return;
-      }
-      if (settings.categories.length <= 1) {
-        toast({ title: "Cannot Delete Category", description: "You must have at least one category.", variant: "destructive" });
-        return;
-      }
-      const newCategories = settings.categories.filter(c => c.id !== categoryId);
-      updateSettings({ categories: newCategories });
-  }, [tasks, settings.categories, toast, updateSettings]);
+  const deleteCategory = useCallback(async (categoryId: string) => {
+    if (!user) return;
+    if (tasks.some(t => t.categoryId === categoryId)) {
+      toast({ title: "Cannot Delete Category", description: "Please reassign tasks from this category before deleting it.", variant: "destructive" });
+      return;
+    }
+    if (settings.categories.length <= 1) {
+      toast({ title: "Cannot Delete Category", description: "You must have at least one category.", variant: "destructive" });
+      return;
+    }
+    const newCategories = settings.categories.filter(c => c.id !== categoryId);
+    await updateSettings({ categories: newCategories });
+  }, [user, tasks, settings.categories, toast, updateSettings]);
 
-  const importData = useCallback((dataString: string) => {
+  const importData = useCallback(async (dataString: string) => {
+    if (!user) return;
     try {
       const data = JSON.parse(dataString);
-      if (data.tasks && data.settings) {
-        setTasks(data.tasks);
-        setSettings(data.settings);
+      if (data.tasks && Array.isArray(data.tasks) && data.settings) {
+        // This is a destructive operation.
+        const batch = writeBatch(db);
+
+        // Delete all existing tasks for the user
+        tasks.forEach(task => {
+            const taskRef = doc(db, 'users', user.uid, 'tasks', task.id);
+            batch.delete(taskRef);
+        });
+
+        // Add all imported tasks
+        data.tasks.forEach((task: any) => {
+            const { id, ...taskData } = task; // Exclude ID from data
+            const newTaskRef = doc(collection(db, 'users', user.uid, 'tasks'));
+            batch.set(newTaskRef, taskData);
+        });
+        
+        // Update settings
+        const settingsRef = doc(db, 'users', user.uid);
+        batch.set(settingsRef, { settings: data.settings }, { merge: true });
+        
+        await batch.commit();
+
         toast({ title: "Success", description: "Data imported successfully." });
       } else {
         throw new Error("Invalid data format.");
@@ -189,7 +206,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
       console.error(error);
       toast({ title: "Import Failed", description: "The provided file is not valid.", variant: "destructive" });
     }
-  }, [toast]);
+  }, [user, toast, tasks]);
 
   const exportData = useCallback(() => {
     return JSON.stringify({ tasks, settings }, null, 2);
@@ -202,7 +219,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     try {
       const result = await getTaskCategory(task.description || task.title);
       if (result.success && result.swimlane) {
-        updateTask(taskId, { swimlane: result.swimlane });
+        await updateTask(taskId, { swimlane: result.swimlane });
         toast({ title: "AI Categorization", description: `Task moved to ${result.swimlane}.` });
       } else {
         throw new Error(result.error);
@@ -212,21 +229,22 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [tasks, updateTask, toast]);
 
-    const clearDailyTasks = useCallback(() => {
-        setTasks(prev => prev.map(t => {
+    const clearDailyTasks = useCallback(async () => {
+        if (!user) return;
+        const batch = writeBatch(db);
+        tasks.forEach(t => {
             if (t.isDaily) {
+                const taskRef = doc(db, 'users', user.uid, 'tasks', t.id);
                 if (t.status === 'completed') {
-                    // For completed tasks, just move them to the general pool but preserve swimlane for analytics.
-                    return { ...t, isDaily: false };
+                    batch.update(taskRef, { isDaily: false });
                 } else {
-                    // For todo tasks, move to general pool and reset swimlane.
-                    return { ...t, isDaily: false, swimlane: 'Morning' };
+                    batch.update(taskRef, { isDaily: false, swimlane: 'Morning' });
                 }
             }
-            return t;
-        }));
+        });
+        await batch.commit();
         toast({ title: 'Daily Board Cleared', description: 'All daily tasks moved back to the general pool.' });
-    }, [toast]);
+    }, [user, tasks, toast]);
 
   return (
     <TaskContext.Provider value={{
