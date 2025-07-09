@@ -156,7 +156,7 @@ export default function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'tassko-backup.json';
+    a.download = 'taskflow-zen-backup.json';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -184,7 +184,7 @@ export default function SettingsPage() {
       <div className="flex flex-col h-full p-4 md:p-6">
         <header className="pb-4 border-b">
           <h1 className="text-2xl font-bold font-headline">Settings</h1>
-          <p className="text-muted-foreground">Customize your Tassko experience.</p>
+          <p className="text-muted-foreground">Customize your TaskFlow Zen experience.</p>
         </header>
         <main className="flex-1 overflow-y-auto pt-6 space-y-8">
             <Card>

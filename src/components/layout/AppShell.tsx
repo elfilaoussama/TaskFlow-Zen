@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0 transition-all duration-300">
                 <BrainCircuit className="text-primary flex-shrink-0" />
-                <h1 className="text-xl font-semibold font-headline whitespace-nowrap">Tassko</h1>
+                <h1 className="text-xl font-semibold font-headline whitespace-nowrap">TaskFlow Zen</h1>
               </div>
               <SidebarTrigger />
           </div>

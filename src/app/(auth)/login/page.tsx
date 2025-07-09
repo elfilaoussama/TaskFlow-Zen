@@ -95,7 +95,7 @@ export default function LoginPage() {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <BrainCircuit className="mx-auto h-8 w-8 text-primary" />
-        <CardTitle className="text-2xl">Welcome Back to Tassko</CardTitle>
+        <CardTitle className="text-2xl">Welcome Back to TaskFlow Zen</CardTitle>
         <CardDescription>Sign in to continue to your workspace.</CardDescription>
       </CardHeader>
       <CardContent>

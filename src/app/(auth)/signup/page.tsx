@@ -38,7 +38,7 @@ export default function SignupPage() {
       await updateProfile(userCredential.user, { displayName: data.name });
       toast({
         title: 'Account Created!',
-        description: "Welcome to Tassko. You're being redirected.",
+        description: "Welcome to TaskFlow Zen. You're being redirected.",
       });
       router.push('/');
     } catch (error: any) {
@@ -56,7 +56,7 @@ export default function SignupPage() {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <BrainCircuit className="mx-auto h-8 w-8 text-primary" />
-        <CardTitle className="text-2xl">Create a Tassko Account</CardTitle>
+        <CardTitle className="text-2xl">Create a TaskFlow Zen Account</CardTitle>
         <CardDescription>Start managing your tasks with ease.</CardDescription>
       </CardHeader>
       <CardContent>
