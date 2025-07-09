@@ -11,7 +11,6 @@ export const TasskoLogo = ({ className, ...props }: React.HTMLAttributes<HTMLDiv
       alt="Tassko Logo"
       fill
       className="object-contain"
-      priority
     />
   </div>
 );
