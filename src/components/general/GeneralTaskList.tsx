@@ -1,23 +1,12 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { Task } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { TaskCard } from '../kanban/TaskCard';
-
-const calculatePriorityScore = (task: Task, weights: any) => {
-    const { urgency, importance, impact } = task.priority;
-    const deadlineDate = new Date(task.deadline);
-    const now = new Date();
-    const daysUntilDeadline = (deadlineDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
-    let deadlineFactor = 1;
-    if (daysUntilDeadline < 1) deadlineFactor = 10;
-    else if (daysUntilDeadline < 3) deadlineFactor = 7;
-    else if (daysUntilDeadline < 7) deadlineFactor = 4;
-    return urgency * weights.urgency + importance * weights.importance + impact * weights.impact + deadlineFactor * weights.deadline;
-};
+import { calculatePriorityScore } from '@/lib/priority';
 
 const CategorySection = ({ category, tasks }: { category: { id: string; name: string; color: string; }, tasks: Task[] }) => {
     if (tasks.length === 0) return null;
@@ -41,19 +30,25 @@ const CategorySection = ({ category, tasks }: { category: { id: string; name: st
 
 export function GeneralTaskList() {
   const { tasks, settings, isLoading } = useTaskContext();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const { activeTasks, completedTasks } = useMemo(() => {
     const generalTasks = tasks.filter(task => !task.isDaily);
     const active = generalTasks.filter(task => task.status === 'todo');
     const completed = generalTasks.filter(task => task.status === 'completed');
     
-    const sortFn = (a: Task, b: Task) => calculatePriorityScore(b, settings.priorityWeights) - calculatePriorityScore(a, settings.priorityWeights);
-    
-    active.sort(sortFn);
-    completed.sort(sortFn);
+    if (isClient) {
+      const sortFn = (a: Task, b: Task) => calculatePriorityScore(b, settings.priorityWeights) - calculatePriorityScore(a, settings.priorityWeights);
+      active.sort(sortFn);
+      completed.sort(sortFn);
+    }
 
     return { activeTasks: active, completedTasks: completed };
-  }, [tasks, settings.priorityWeights]);
+  }, [tasks, settings.priorityWeights, isClient]);
 
 
   const tasksByCategory = useMemo(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -9,21 +9,15 @@ import {
 } from 'recharts';
 import { parseISO, subDays, format, eachDayOfInterval, isSameDay } from 'date-fns';
 import { Task } from '@/lib/types';
-
-const calculatePriorityScore = (task: Task, weights: any) => {
-    const { urgency, importance, impact } = task.priority;
-    const deadlineDate = new Date(task.deadline);
-    const now = new Date();
-    const daysUntilDeadline = (deadlineDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
-    let deadlineFactor = 1;
-    if (daysUntilDeadline < 1) deadlineFactor = 10;
-    else if (daysUntilDeadline < 3) deadlineFactor = 7;
-    else if (daysUntilDeadline < 7) deadlineFactor = 4;
-    return urgency * weights.urgency + importance * weights.importance + impact * weights.impact + deadlineFactor * weights.deadline;
-};
+import { calculatePriorityScore } from '@/lib/priority';
 
 export default function AnalyticsPage() {
   const { tasks, settings } = useTaskContext();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const completedTasks = useMemo(() => tasks.filter(t => t.status === 'completed' && t.completedAt), [tasks]);
   
@@ -36,6 +30,7 @@ export default function AnalyticsPage() {
   }, [tasks, settings.categories]);
 
   const priorityVsDuration = useMemo(() => {
+    if (!isClient) return [];
     return completedTasks.map(task => {
         const duration = (parseISO(task.completedAt!).getTime() - parseISO(task.createdAt).getTime()) / (1000 * 3600); // in hours
         return {
@@ -44,7 +39,7 @@ export default function AnalyticsPage() {
             swimlane: task.swimlane
         }
     })
-  }, [completedTasks, settings.priorityWeights]);
+  }, [completedTasks, settings.priorityWeights, isClient]);
 
   const progressData = useMemo(() => {
     const last30Days = eachDayOfInterval({

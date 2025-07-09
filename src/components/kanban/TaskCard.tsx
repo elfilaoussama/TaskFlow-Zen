@@ -9,34 +9,32 @@ import { Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { Bot, Calendar, CheckCircle2, Clock, GripVertical, Paperclip, PlusCircle, Star, Undo2 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { AddTaskDialog } from './AddTaskDialog';
+import { calculatePriorityScore } from '@/lib/priority';
 
 interface TaskCardProps {
   task: Task;
   boardType: 'general' | 'daily';
 }
 
-const calculatePriorityScore = (task: Task, weights: any) => {
-    const { urgency, importance, impact } = task.priority;
-    const deadlineDate = new Date(task.deadline);
-    const now = new Date();
-    const daysUntilDeadline = (deadlineDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
-    let deadlineFactor = 1;
-    if (daysUntilDeadline < 1) deadlineFactor = 10;
-    else if (daysUntilDeadline < 3) deadlineFactor = 7;
-    else if (daysUntilDeadline < 7) deadlineFactor = 4;
-    return urgency * weights.urgency + importance * weights.importance + impact * weights.impact + deadlineFactor * weights.deadline;
-};
-
 export function TaskCard({ task, boardType }: TaskCardProps) {
   const { settings, updateTask, categorizeTask, moveFromGeneralToDaily } = useTaskContext();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCategorizing, setIsCategorizing] = useState(false);
   const playSound = useSound();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const category = useMemo(() => settings.categories.find(c => c.id === task.categoryId), [task.categoryId, settings.categories]);
-  const priorityScore = useMemo(() => calculatePriorityScore(task, settings.priorityWeights), [task, settings.priorityWeights]);
+  
+  const priorityScore = useMemo(() => {
+    if (!isClient) return 0;
+    return calculatePriorityScore(task, settings.priorityWeights);
+  }, [task, settings.priorityWeights, isClient]);
 
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
@@ -90,7 +88,7 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
             <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1.5" title={`Deadline: ${new Date(task.deadline).toLocaleDateString()}`}>
                     <Calendar className="h-3 w-3" /> 
-                    <span>{formatDistanceToNow(new Date(task.deadline), { addSuffix: true })}</span>
+                    <span>{isClient ? formatDistanceToNow(new Date(task.deadline), { addSuffix: true }) : '...'}</span>
                 </div>
                 {task.duration && (
                     <div className="flex items-center gap-1.5" title="Estimated duration">
