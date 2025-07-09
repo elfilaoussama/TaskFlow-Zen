@@ -184,9 +184,8 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     const userSettingsRef = doc(db, 'users', user.uid);
     await setDoc(userSettingsRef, { settings: newFullSettings }, { merge: true });
     toast({ title: "Settings Updated" });
-    addNotification({ message: 'Settings Updated', type: 'info' });
     playSound('success');
-  }, [user, settings, toast, playSound, addNotification]);
+  }, [user, settings, toast, playSound]);
   
   const addCategory = useCallback(async (category: Omit<Category, 'id'>) => {
     if (!user || !db) return;
@@ -260,10 +259,10 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   }, [user, toast, tasks, playSound, addNotification]);
 
   const exportData = useCallback(() => {
-    addNotification({ message: 'Data Exported', description: 'A backup file has been downloaded.', type: 'success' });
+    toast({ title: 'Data Exported', description: 'A backup file has been downloaded.' });
     playSound('success');
     return JSON.stringify({ tasks, settings }, null, 2);
-  }, [tasks, settings, playSound, addNotification]);
+  }, [tasks, settings, playSound, toast]);
 
   const categorizeTask = useCallback(async (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);

@@ -1,3 +1,4 @@
+
 import type React from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -7,7 +8,7 @@ import { cn } from '@/lib/utils';
 export const TasskoLogo = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("relative", className)} {...props}>
     <Image
-      src="/tassko.png"
+      src="/tassko-glass.png"
       alt="Tassko Logo"
       fill
       className="object-contain"

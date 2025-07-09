@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -8,7 +9,21 @@ import {
   BarChart, Bar, ScatterChart, Scatter, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, ZAxis
 } from 'recharts';
-import { parseISO, subDays, format, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { 
+    parseISO, 
+    format, 
+    isToday, 
+    isThisWeek, 
+    isThisMonth, 
+    getHours, 
+    getDay, 
+    getDate,
+    startOfWeek,
+    endOfWeek,
+    startOfMonth,
+    endOfMonth,
+    eachDayOfInterval
+} from 'date-fns';
 import { Task } from '@/lib/types';
 import { calculatePriorityScore } from '@/lib/priority';
 
@@ -47,57 +62,81 @@ export default function AnalyticsPage() {
 
   const progressData = useMemo(() => {
     const now = new Date();
-    let interval;
+    if (!isClient) return [];
+    
+    let dataPoints: {date: string, 'Tasks Completed': number, 'Hours Worked': number}[] = [];
 
-    switch(timeRange) {
-        case 'monthly':
-            interval = { start: subDays(now, 365), end: now };
-            break;
-        case 'weekly':
-            interval = { start: subDays(now, 90), end: now };
-            break;
-        case 'daily':
-        default:
-            interval = { start: subDays(now, 29), end: now };
-            break;
-    }
-
-    const tasksInInterval = completedTasks.filter(task => {
+    const tasksInPeriod = completedTasks.filter(task => {
         const completedDate = parseISO(task.completedAt!);
-        return completedDate >= interval.start && completedDate <= interval.end;
+        if (timeRange === 'daily') return isToday(completedDate);
+        if (timeRange === 'weekly') return isThisWeek(completedDate, { weekStartsOn: 1 });
+        if (timeRange === 'monthly') return isThisMonth(completedDate);
+        return false;
     });
 
-    const groupedData = tasksInInterval.reduce((acc, task) => {
-        const completedDate = parseISO(task.completedAt!);
-        let key = '';
+    switch(timeRange) {
+        case 'daily': {
+            const hourlyData = tasksInPeriod.reduce((acc, task) => {
+                const hour = getHours(parseISO(task.completedAt!));
+                if (!acc[hour]) acc[hour] = { tasks: 0, hours: 0 };
+                acc[hour].tasks += 1;
+                acc[hour].hours += (task.duration || 0) / 60;
+                return acc;
+            }, {} as Record<number, { tasks: number; hours: number }>);
 
-        if (timeRange === 'daily') {
-            key = format(completedDate, 'yyyy-MM-dd');
-        } else if (timeRange === 'weekly') {
-            key = format(startOfWeek(completedDate), 'yyyy-MM-dd');
-        } else { // monthly
-            key = format(startOfMonth(completedDate), 'yyyy-MM');
+            dataPoints = Array.from({ length: 24 }, (_, i) => {
+                const data = hourlyData[i] || { tasks: 0, hours: 0 };
+                return {
+                    date: `${i}:00`,
+                    'Tasks Completed': data.tasks,
+                    'Hours Worked': parseFloat(data.hours.toFixed(2)),
+                };
+            });
+            break;
         }
-        
-        if (!acc[key]) {
-            acc[key] = {
-                'Tasks Completed': 0,
-                'Hours Worked': 0,
-            };
+        case 'weekly': {
+            const dailyData = tasksInPeriod.reduce((acc, task) => {
+                const day = getDay(parseISO(task.completedAt!)); // 0 = Sun
+                if (!acc[day]) acc[day] = { tasks: 0, hours: 0 };
+                acc[day].tasks += 1;
+                acc[day].hours += (task.duration || 0) / 60;
+                return acc;
+            }, {} as Record<number, { tasks: number; hours: number }>);
+            
+            const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+            dataPoints = eachDayOfInterval({ start: weekStart, end: endOfWeek(now, { weekStartsOn: 1 }) }).map(day => {
+                const data = dailyData[getDay(day)] || { tasks: 0, hours: 0 };
+                return {
+                    date: format(day, 'E'),
+                    'Tasks Completed': data.tasks,
+                    'Hours Worked': parseFloat(data.hours.toFixed(2)),
+                };
+            });
+            break;
         }
-        acc[key]['Tasks Completed'] += 1;
-        acc[key]['Hours Worked'] += (task.duration || 0) / 60;
+        case 'monthly': {
+            const dailyData = tasksInPeriod.reduce((acc, task) => {
+                const day = getDate(parseISO(task.completedAt!)); // 1-31
+                if (!acc[day]) acc[day] = { tasks: 0, hours: 0 };
+                acc[day].tasks += 1;
+                acc[day].hours += (task.duration || 0) / 60;
+                return acc;
+            }, {} as Record<number, { tasks: number; hours: number }>);
 
-        return acc;
-    }, {} as Record<string, { 'Tasks Completed': number; 'Hours Worked': number }>);
-    
-    return Object.entries(groupedData).map(([date, data]) => ({
-        date: timeRange === 'monthly' ? format(parseISO(date), 'MMM yy') : format(parseISO(date), 'MMM d'),
-        'Tasks Completed': data['Tasks Completed'],
-        'Hours Worked': parseFloat(data['Hours Worked'].toFixed(2)),
-    })).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            dataPoints = eachDayOfInterval({ start: startOfMonth(now), end: endOfMonth(now) }).map(day => {
+                const data = dailyData[getDate(day)] || { tasks: 0, hours: 0 };
+                return {
+                    date: format(day, 'd'),
+                    'Tasks Completed': data.tasks,
+                    'Hours Worked': parseFloat(data.hours.toFixed(2)),
+                };
+            });
+            break;
+        }
+    }
+    return dataPoints;
 
-  }, [completedTasks, timeRange]);
+  }, [completedTasks, timeRange, isClient]);
 
 
   return (
@@ -151,9 +190,9 @@ export default function AnalyticsPage() {
                             <CardDescription>Your productivity over time.</CardDescription>
                         </div>
                         <div className="flex items-center gap-1 rounded-md bg-muted p-1">
-                            <Button variant={timeRange === 'daily' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTimeRange('daily')} className="h-7 px-3">Daily</Button>
-                            <Button variant={timeRange === 'weekly' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTimeRange('weekly')} className="h-7 px-3">Weekly</Button>
-                            <Button variant={timeRange === 'monthly' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTimeRange('monthly')} className="h-7 px-3">Monthly</Button>
+                            <Button variant={timeRange === 'daily' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTimeRange('daily')} className="h-7 px-3">Today</Button>
+                            <Button variant={timeRange === 'weekly' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTimeRange('weekly')} className="h-7 px-3">This Week</Button>
+                            <Button variant={timeRange === 'monthly' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTimeRange('monthly')} className="h-7 px-3">This Month</Button>
                         </div>
                     </div>
                 </CardHeader>
