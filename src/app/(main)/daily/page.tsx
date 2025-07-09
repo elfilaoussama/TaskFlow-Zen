@@ -1,7 +1,6 @@
 
 "use client";
 
-import type { Metadata } from 'next';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
@@ -17,11 +16,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-
-export const metadata: Metadata = {
-  title: 'Daily Kanban Board',
-  description: 'Plan your day with laser focus. Move tasks from the general pool to your daily Morning, Midday, and Evening swimlanes.',
-};
 
 export default function DailyKanbanPage() {
   const { clearDailyTasks } = useTaskContext();

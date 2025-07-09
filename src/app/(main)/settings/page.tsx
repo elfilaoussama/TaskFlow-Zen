@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import type { Metadata } from 'next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -26,15 +25,6 @@ import { useToast } from '@/hooks/use-toast';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { useNotification } from '@/hooks/use-notification';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-export const metadata: Metadata = {
-  title: 'Settings',
-  description: 'Customize your TaskFlow Zen experience. Manage categories, priority weights, account settings, and data import/export.',
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
 
 const categorySchema = z.object({
   name: z.string().min(1, 'Name is required'),

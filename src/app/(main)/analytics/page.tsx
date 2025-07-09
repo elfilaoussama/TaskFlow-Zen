@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
-import type { Metadata } from 'next';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,14 +26,6 @@ import {
 } from 'date-fns';
 import { Task } from '@/lib/types';
 import { calculatePriorityScore } from '@/lib/priority';
-
-// This metadata would typically be in a `layout.tsx` or `page.tsx` at the root of the route segment
-// but we place it here for simplicity in this file structure.
-export const metadata: Metadata = {
-  title: 'Productivity Analytics',
-  description: 'Analyze your task completion trends, category distribution, and productivity patterns with detailed charts and graphs in TaskFlow Zen.',
-};
-
 
 type TimeRange = 'daily' | 'weekly' | 'monthly';
 
