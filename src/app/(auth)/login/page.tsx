@@ -15,9 +15,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { BrainCircuit } from 'lucide-react';
 import { GoogleIcon } from '@/components/auth/GoogleIcon';
 import { useNotification } from '@/hooks/use-notification';
+import { TasskoLogo } from '@/components/TasskoLogo';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -75,7 +75,7 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
-        <BrainCircuit className="mx-auto h-8 w-8 text-primary" />
+        <TasskoLogo className="mx-auto h-12 w-12 text-primary" />
         <CardTitle className="text-2xl">Welcome Back to Tassko</CardTitle>
         <CardDescription>Sign in to continue to your workspace.</CardDescription>
       </CardHeader>

@@ -4,10 +4,10 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, isFirebaseConfigured, db } from '@/lib/firebase';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { TasskoLogo } from '@/components/TasskoLogo';
 
 interface AuthContextType {
   user: User | null;
@@ -90,8 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {isLoading ? (
          <div className="flex items-center justify-center h-screen w-screen bg-background">
             <div className="flex flex-col items-center gap-4">
-                <p className="text-xl font-semibold text-primary">Tassko</p>
-                <Skeleton className="h-12 w-12 rounded-full" />
+                <TasskoLogo className="h-16 w-16 text-primary animate-pulse" />
                 <p className="text-muted-foreground">Loading your workspace...</p>
             </div>
          </div>

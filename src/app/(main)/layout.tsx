@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TasskoLogo } from "@/components/TasskoLogo";
 
 export default function MainLayout({
   children,
@@ -28,8 +29,7 @@ export default function MainLayout({
     return (
        <div className="flex h-screen w-screen items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4">
-              <p className="text-xl font-semibold text-primary">Tassko</p>
-              <Skeleton className="h-12 w-12 rounded-full" />
+              <TasskoLogo className="h-16 w-16 text-primary animate-pulse" />
               <p className="text-muted-foreground">Verifying session...</p>
           </div>
        </div>

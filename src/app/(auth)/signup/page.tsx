@@ -14,10 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BrainCircuit } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { GoogleIcon } from '@/components/auth/GoogleIcon';
 import { useNotification } from '@/hooks/use-notification';
+import { TasskoLogo } from '@/components/TasskoLogo';
 
 
 const signupSchema = z.object({
@@ -88,7 +88,7 @@ export default function SignupPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
-        <BrainCircuit className="mx-auto h-8 w-8 text-primary" />
+        <TasskoLogo className="mx-auto h-12 w-12 text-primary" />
         <CardTitle className="text-2xl">Create a Tassko Account</CardTitle>
         <CardDescription>Start managing your tasks with ease.</CardDescription>
       </CardHeader>
