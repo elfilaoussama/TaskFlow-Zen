@@ -44,9 +44,9 @@ export default function SignupPage() {
       await updateProfile(userCredential.user, { displayName: data.name });
       toast({
         title: 'Account Created!',
-        description: "Welcome to TaskFlow Zen. You're being redirected.",
+        description: "Welcome to Tassko. You're being redirected.",
       });
-      addNotification({ message: 'Welcome to TaskFlow Zen!', type: 'success'});
+      addNotification({ message: 'Welcome to Tassko!', type: 'success'});
       router.push('/');
     } catch (error: any) {
       const errorMessage = error.message || 'An unknown error occurred.';
@@ -68,9 +68,9 @@ export default function SignupPage() {
       await signInWithPopup(auth, provider);
       toast({
         title: 'Account Created!',
-        description: "Welcome to TaskFlow Zen. You're being redirected.",
+        description: "Welcome to Tassko. You're being redirected.",
       });
-      addNotification({ message: 'Welcome to TaskFlow Zen!', type: 'success'});
+      addNotification({ message: 'Welcome to Tassko!', type: 'success'});
       router.push('/');
     } catch (error: any) {
       const errorMessage = error.message || 'An unknown error occurred.';
@@ -89,7 +89,7 @@ export default function SignupPage() {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
         <BrainCircuit className="mx-auto h-8 w-8 text-primary" />
-        <CardTitle className="text-2xl">Create a TaskFlow Zen Account</CardTitle>
+        <CardTitle className="text-2xl">Create a Tassko Account</CardTitle>
         <CardDescription>Start managing your tasks with ease.</CardDescription>
       </CardHeader>
       <CardContent>

@@ -28,7 +28,7 @@ export default function MainLayout({
     return (
        <div className="flex h-screen w-screen items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4">
-              <p className="text-xl font-semibold text-primary">TaskFlow Zen</p>
+              <p className="text-xl font-semibold text-primary">Tassko</p>
               <Skeleton className="h-12 w-12 rounded-full" />
               <p className="text-muted-foreground">Verifying session...</p>
           </div>

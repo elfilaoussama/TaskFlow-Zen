@@ -12,7 +12,7 @@ const onboardingSteps = [
     {
         image: "https://placehold.co/600x400.png",
         hint: "welcome handshake",
-        title: "Welcome to TaskFlow Zen!",
+        title: "Welcome to Tassko!",
         description: "Your new workspace for masterful task management. Let's take a quick tour to get you started."
     },
     {
