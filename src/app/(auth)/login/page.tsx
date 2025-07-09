@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendEmailVerification, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -38,8 +38,20 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
-      router.push('/');
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      
+      if (!userCredential.user.emailVerified) {
+        toast({
+          title: 'Email Not Verified',
+          description: 'Please check your inbox to verify your email. A new link has been sent.',
+          variant: 'destructive',
+          duration: 10000,
+        });
+        await sendEmailVerification(userCredential.user);
+        await signOut(auth);
+      } else {
+        router.push('/');
+      }
     } catch (error: any) {
       const errorMessage = error.message || 'An unknown error occurred.';
       toast({

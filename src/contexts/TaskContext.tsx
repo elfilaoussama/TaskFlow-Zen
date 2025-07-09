@@ -107,7 +107,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const dataToSend: any = { ...newTask };
-    if (dataToSend.duration === undefined) {
+    if (dataToSend.duration === undefined || dataToSend.duration === null) {
       delete dataToSend.duration;
     }
     if (dataToSend.completedAt === undefined) {
@@ -137,14 +137,17 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     
     await updateDoc(taskRef, updatesToSend);
     if(updates.status === 'completed') {
-        toast({ title: "Task Completed!"});
-        addNotification({ message: 'Task Completed!', type: 'success' });
+        const completedTask = tasks.find(t => t.id === taskId);
+        if (completedTask) {
+             toast({ title: "Task Completed!", description: `"${completedTask.title}" finished.` });
+             addNotification({ message: 'Task Completed!', description: `"${completedTask.title}" finished.`, type: 'success' });
+        }
         playSound('success');
     }
     if(updates.status === 'todo') {
         playSound('success');
     }
-  }, [user, playSound, toast, addNotification]);
+  }, [user, playSound, toast, addNotification, tasks]);
 
   const deleteTask = useCallback(async (taskId: string) => {
     if (!user || !db) return;
@@ -183,21 +186,25 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     const newFullSettings = { ...settings, ...newSettings };
     const userSettingsRef = doc(db, 'users', user.uid);
     await setDoc(userSettingsRef, { settings: newFullSettings }, { merge: true });
-    toast({ title: "Settings Updated" });
-    playSound('success');
-  }, [user, settings, toast, playSound]);
+    // This toast can be annoying, so only show for major changes, or remove it
+    // toast({ title: "Settings Updated" });
+  }, [user, settings]);
   
   const addCategory = useCallback(async (category: Omit<Category, 'id'>) => {
     if (!user || !db) return;
     const newCategory = { ...category, id: doc(collection(db, 'tmp')).id }; // local unique id
     await updateSettings({ categories: [...settings.categories, newCategory] });
-  }, [user, settings.categories, updateSettings]);
+    toast({ title: 'Category Added' });
+    playSound('success');
+  }, [user, settings.categories, updateSettings, toast, playSound]);
 
   const updateCategory = useCallback(async (categoryId: string, updates: Partial<Category>) => {
     if (!user || !db) return;
     const newCategories = settings.categories.map(c => c.id === categoryId ? { ...c, ...updates } : c);
     await updateSettings({ categories: newCategories });
-  }, [user, settings.categories, updateSettings]);
+    toast({ title: 'Category Updated' });
+    playSound('success');
+  }, [user, settings.categories, updateSettings, toast, playSound]);
   
   const deleteCategory = useCallback(async (categoryId: string) => {
     if (!user || !db) return;
@@ -226,10 +233,8 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
         const batch = writeBatch(db);
 
         // Delete all existing tasks for the user
-        tasks.forEach(task => {
-            const taskRef = doc(db, 'users', user.uid, 'tasks', task.id);
-            batch.delete(taskRef);
-        });
+        const tasksQuerySnapshot = await getDoc(collection(db, 'users', user.uid, 'tasks'));
+        tasksQuerySnapshot.docs.forEach(doc => batch.delete(doc.ref));
 
         // Add all imported tasks
         data.tasks.forEach((task: any) => {
@@ -256,7 +261,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
       addNotification({ message: 'Import Failed', description: 'The backup file was not valid.', type: 'error' });
       playSound('error');
     }
-  }, [user, toast, tasks, playSound, addNotification]);
+  }, [user, toast, playSound, addNotification]);
 
   const exportData = useCallback(() => {
     toast({ title: 'Data Exported', description: 'A backup file has been downloaded.' });
@@ -289,13 +294,13 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
         if (!user || !db) return;
         const batch = writeBatch(db);
         tasks.forEach(t => {
-            if (t.isDaily && t.status !== 'completed') {
+            if (t.isDaily) {
                 const taskRef = doc(db, 'users', user.uid, 'tasks', t.id);
                 batch.update(taskRef, { isDaily: false });
             }
         });
         await batch.commit();
-        toast({ title: 'Daily Board Cleared', description: 'All daily tasks moved back to the general pool.' });
+        toast({ title: 'Daily Board Cleared', description: 'All daily tasks have been moved back to the general pool.' });
         addNotification({ message: 'Daily Board Cleared', description: 'Tasks moved back to the general pool.', type: 'info' });
         playSound('success');
     }, [user, tasks, toast, playSound, addNotification]);
