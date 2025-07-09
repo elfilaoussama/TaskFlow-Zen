@@ -51,7 +51,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const playSound = useSound();
+  const playSound = useSound(settings.soundEnabled);
 
   useEffect(() => {
     if (user && isFirebaseConfigured && db) {

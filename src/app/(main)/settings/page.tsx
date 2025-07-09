@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState } from 'react';
@@ -117,7 +118,7 @@ export default function SettingsPage() {
   const { settings, updateSettings, deleteCategory, importData, exportData } = useTaskContext();
   const { user } = useAuth();
   const { toast } = useToast();
-  const playSound = useSound();
+  const playSound = useSound(settings.soundEnabled);
 
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | undefined>(undefined);

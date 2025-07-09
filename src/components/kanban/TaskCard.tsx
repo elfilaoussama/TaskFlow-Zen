@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +25,7 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
   const { settings, updateTask, categorizeTask, moveFromGeneralToDaily } = useTaskContext();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCategorizing, setIsCategorizing] = useState(false);
-  const playSound = useSound();
+  const playSound = useSound(settings.soundEnabled);
   const [isClient, setIsClient] = useState(false);
   const [isAttachmentViewerOpen, setIsAttachmentViewerOpen] = useState(false);
   const [selectedAttachment, setSelectedAttachment] = useState<Attachment | null>(null);

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
@@ -119,7 +120,7 @@ const AddLinkPopover = ({ onAddLink }: { onAddLink: (name: string, url: string) 
 
 export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogProps) {
   const { addTask, updateTask, deleteTask, settings } = useTaskContext();
-  const playSound = useSound();
+  const playSound = useSound(settings.soundEnabled);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 

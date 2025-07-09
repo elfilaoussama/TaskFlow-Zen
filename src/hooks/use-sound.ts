@@ -1,14 +1,13 @@
 
+
 "use client";
 
 import { useCallback, useEffect, useState } from 'react';
 import * as Tone from 'tone';
-import { useTaskContext } from '@/contexts/TaskContext';
 
 type SoundType = 'drag' | 'drop' | 'complete' | 'add' | 'delete' | 'success' | 'error';
 
-export function useSound() {
-  const { settings } = useTaskContext();
+export function useSound(soundEnabled: boolean) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   const initializeAudio = useCallback(async () => {
@@ -19,7 +18,7 @@ export function useSound() {
   }, [isInitialized]);
 
   const playSound = useCallback((type: SoundType) => {
-    if (!settings.soundEnabled || !isInitialized) return;
+    if (!soundEnabled || !isInitialized) return;
 
     try {
       switch (type) {
@@ -65,7 +64,7 @@ export function useSound() {
     } catch (error) {
       console.error("Error playing sound:", error);
     }
-  }, [settings.soundEnabled, isInitialized]);
+  }, [soundEnabled, isInitialized]);
 
   useEffect(() => {
     const init = async () => {

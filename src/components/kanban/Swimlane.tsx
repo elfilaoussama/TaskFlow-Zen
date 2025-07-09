@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -20,7 +21,7 @@ export function Swimlane({ id, title, tasks, boardType }: SwimlaneProps) {
   const { moveTask, settings } = useTaskContext();
   const [isDragOver, setIsDragOver] = useState(false);
   const [timeText, setTimeText] = useState('');
-  const playSound = useSound();
+  const playSound = useSound(settings.soundEnabled);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
