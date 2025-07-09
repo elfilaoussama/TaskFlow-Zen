@@ -21,7 +21,7 @@ Welcome to Tassko, a modern, AI-powered task management application built with N
 -   **Styling:** [Tailwind CSS](https://tailwindcss.com/) & [ShadCN UI](https://ui.shadcn.com/)
 -   **Generative AI:** [Firebase Genkit](https://firebase.google.com/docs/genkit)
 -   **Backend & Database:** [Firebase Authentication & Firestore](https://firebase.google.com/)
--   **Deployment:** [Firebase Hosting](https://firebase.google.com/docs/hosting)
+-   **Deployment:** [Firebase App Hosting](https://firebase.google.com/docs/app-hosting)
 
 ## Getting Started
 
@@ -66,6 +66,20 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Deployment
+
+This application is configured for deployment using [Firebase App Hosting](https://firebase.google.com/docs/app-hosting), a fully-managed, serverless hosting service for web applications.
+
+### To Deploy Your App:
+
+1.  **Connect to GitHub:** Go to the Firebase App Hosting section of your Firebase console.
+2.  **Create a Backend:** Click "Create backend" and follow the prompts to connect your GitHub repository.
+3.  **Automatic Deployments:** Once connected, App Hosting will automatically build and deploy your application.
+    -   Every `push` to the `main` branch will update your live site.
+    -   Every pull request will generate a temporary preview URL.
+
+The `apphosting.yaml` file in the root of the project contains the configuration for the App Hosting build. The existing `.github/workflows` files are for a legacy deployment method and are not used by App Hosting.
 
 ## Project Structure
 
