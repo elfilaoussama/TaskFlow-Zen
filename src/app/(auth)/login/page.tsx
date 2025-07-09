@@ -82,7 +82,7 @@ export default function LoginPage() {
       router.push('/');
     } catch (error: any) {
       toast({
-        title: 'Google Sign-In Failed',
+        title: `Google Sign-In Failed (${error.code})`,
         description: error.message,
         variant: 'destructive',
       });
