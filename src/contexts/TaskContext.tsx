@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -100,14 +101,28 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
         impact: taskData.priority?.impact ?? 5,
       },
     };
-    await addDoc(collection(db, 'users', user.uid, 'tasks'), newTask);
+
+    const dataToSend = { ...newTask };
+    // Firestore does not allow 'undefined' values.
+    if (dataToSend.duration === undefined) {
+      delete (dataToSend as { duration?: number }).duration;
+    }
+
+    await addDoc(collection(db, 'users', user.uid, 'tasks'), dataToSend);
     toast({ title: "Task Created", description: `"${newTask.title}" has been added.` });
   }, [user, toast]);
   
   const updateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
     if (!user || !db) return;
     const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
-    await updateDoc(taskRef, updates);
+
+    const updatesToSend = { ...updates };
+    // Firestore does not allow 'undefined' values.
+    if (updatesToSend.duration === undefined) {
+        delete updatesToSend.duration;
+    }
+    
+    await updateDoc(taskRef, updatesToSend);
   }, [user]);
 
   const deleteTask = useCallback(async (taskId: string) => {
