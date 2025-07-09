@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
+import type { Metadata } from 'next';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,14 @@ import {
 import { Task } from '@/lib/types';
 import { calculatePriorityScore } from '@/lib/priority';
 
+// This metadata would typically be in a `layout.tsx` or `page.tsx` at the root of the route segment
+// but we place it here for simplicity in this file structure.
+export const metadata: Metadata = {
+  title: 'Productivity Analytics',
+  description: 'Analyze your task completion trends, category distribution, and productivity patterns with detailed charts and graphs in TaskFlow Zen.',
+};
+
+
 type TimeRange = 'daily' | 'weekly' | 'monthly';
 
 export default function AnalyticsPage() {
@@ -41,12 +50,13 @@ export default function AnalyticsPage() {
   const completedTasks = useMemo(() => tasks.filter(t => t.status === 'completed' && t.completedAt), [tasks]);
   
   const categoryDistribution = useMemo(() => {
+    if (!isClient) return [];
     return settings.categories.map(cat => ({
         name: cat.name,
         count: tasks.filter(t => t.categoryId === cat.id).length,
         fill: cat.color
     }))
-  }, [tasks, settings.categories]);
+  }, [tasks, settings.categories, isClient]);
 
   const priorityVsDuration = useMemo(() => {
     if (!isClient) return [];
@@ -140,12 +150,12 @@ export default function AnalyticsPage() {
 
 
   return (
-    <div className="flex flex-col h-full p-4 md:p-6">
+    <main className="flex flex-col h-full p-4 md:p-6">
       <header className="pb-4 border-b">
         <h1 className="text-2xl font-bold font-headline">Analytics</h1>
         <p className="text-muted-foreground">Insights into your productivity.</p>
       </header>
-      <main className="flex-1 overflow-y-auto pt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="flex-1 overflow-y-auto pt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
                 <CardHeader><CardTitle>Category Distribution</CardTitle></CardHeader>
                 <CardContent className="h-80">
@@ -211,7 +221,7 @@ export default function AnalyticsPage() {
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

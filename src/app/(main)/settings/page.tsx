@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import type { Metadata } from 'next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -25,6 +26,15 @@ import { useToast } from '@/hooks/use-toast';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { useNotification } from '@/hooks/use-notification';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+export const metadata: Metadata = {
+  title: 'Settings',
+  description: 'Customize your TaskFlow Zen experience. Manage categories, priority weights, account settings, and data import/export.',
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 const categorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -216,12 +226,12 @@ export default function SettingsPage() {
 
   return (
     <>
-      <div className="flex flex-col h-full p-4 md:p-6">
+      <main className="flex flex-col h-full p-4 md:p-6">
         <header className="pb-4 border-b">
           <h1 className="text-2xl font-bold font-headline">Settings</h1>
           <p className="text-muted-foreground">Customize your Tassko experience.</p>
         </header>
-        <main className="flex-1 overflow-y-auto pt-6 space-y-8">
+        <div className="flex-1 overflow-y-auto pt-6 space-y-8">
             <Card>
                 <CardHeader>
                     <div className="flex justify-between items-center">
@@ -362,8 +372,8 @@ export default function SettingsPage() {
                     </div>
                 </CardContent>
             </Card>
-        </main>
-      </div>
+        </div>
+      </main>
       <CategoryDialog isOpen={isCategoryDialogOpen} setIsOpen={setIsCategoryDialogOpen} categoryToEdit={categoryToEdit} />
     </>
   );
