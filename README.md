@@ -82,6 +82,42 @@ This application is configured for deployment using [Firebase App Hosting](https
 
 The `apphosting.yaml` file in the root of the project contains the configuration for the App Hosting build. The existing `.github/workflows` files are for a legacy deployment method and are not used by App Hosting.
 
+## Customization
+
+### Email Templates
+
+To provide a professional user experience, you can customize the emails Firebase sends for actions like password resets.
+
+1.  Go to the **Firebase Console**.
+2.  Navigate to **Authentication** > **Templates**.
+3.  Select the **Password reset** template.
+4.  Click the pencil icon to edit it.
+5.  Customize the **Subject** and **Message**. You can use the following professional template:
+
+    **Subject:**
+    ```
+    Reset Your Tassko Password
+    ```
+
+    **Message:**
+    ```
+    Hi %DISPLAY_NAME%,
+
+    We received a request to reset the password for your Tassko account.
+
+    If you made this request, click the link below to reset your password:
+
+    %LINK%
+
+    If you didn’t request a password reset, please ignore this email. Your account will remain secure.
+
+    If you need help, feel free to reach out to our support team.
+
+    Thanks,
+    The Tassko Team
+    ```
+6.  Click **Save**.
+
 ## Project Structure
 
 For a detailed explanation of the project's folder structure and architecture, please refer to the [**Source Code README**](./src/README.md).
