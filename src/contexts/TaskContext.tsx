@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -10,6 +9,7 @@ import { useAuth } from './AuthContext';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
 import { collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc, writeBatch, query } from 'firebase/firestore';
 import { useSound } from '@/hooks/use-sound';
+import { useNotification } from '@/hooks/use-notification';
 
 interface TaskContextType {
   tasks: Task[];
@@ -51,6 +51,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { addNotification } = useNotification();
   const playSound = useSound(settings.soundEnabled);
 
   useEffect(() => {
@@ -118,8 +119,9 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
 
     await addDoc(collection(db, 'users', user.uid, 'tasks'), dataToSend);
     toast({ title: "Task Created", description: `"${newTask.title}" has been added.` });
+    addNotification({ message: 'Task Created', description: `"${newTask.title}" has been added.`, type: 'success' });
     playSound('success');
-  }, [user, toast, playSound]);
+  }, [user, toast, playSound, addNotification]);
   
   const updateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
     if (!user || !db) return;
@@ -136,12 +138,13 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     await updateDoc(taskRef, updatesToSend);
     if(updates.status === 'completed') {
         toast({ title: "Task Completed!"});
+        addNotification({ message: 'Task Completed!', type: 'success' });
         playSound('success');
     }
     if(updates.status === 'todo') {
         playSound('success');
     }
-  }, [user, playSound, toast]);
+  }, [user, playSound, toast, addNotification]);
 
   const deleteTask = useCallback(async (taskId: string) => {
     if (!user || !db) return;
@@ -150,9 +153,10 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     await deleteDoc(taskRef);
     if (taskToDelete) {
       toast({ title: "Task Deleted", description: `"${taskToDelete.title}" has been removed.`, variant: 'destructive' });
+      addNotification({ message: 'Task Deleted', description: `"${taskToDelete.title}" was removed.`, type: 'error' });
       playSound('error');
     }
-  }, [user, tasks, toast, playSound]);
+  }, [user, tasks, toast, playSound, addNotification]);
 
   const moveTask = useCallback(async (taskId: string, newSwimlane: SwimlaneId) => {
     if (!user || !db) return;
@@ -169,9 +173,10 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
         title: 'Task Added to Daily Board',
         description: `"${task.title}" is now on your daily plan.`,
       });
+      addNotification({ message: 'Task Added to Daily Board', description: `"${task.title}" is ready.`, type: 'info' });
       playSound('success');
     }
-  }, [user, tasks, toast, updateTask, playSound]);
+  }, [user, tasks, toast, updateTask, playSound, addNotification]);
 
   const updateSettings = useCallback(async (newSettings: Partial<Settings>) => {
     if (!user || !db) return;
@@ -179,8 +184,9 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     const userSettingsRef = doc(db, 'users', user.uid);
     await setDoc(userSettingsRef, { settings: newFullSettings }, { merge: true });
     toast({ title: "Settings Updated" });
+    addNotification({ message: 'Settings Updated', type: 'info' });
     playSound('success');
-  }, [user, settings, toast, playSound]);
+  }, [user, settings, toast, playSound, addNotification]);
   
   const addCategory = useCallback(async (category: Omit<Category, 'id'>) => {
     if (!user || !db) return;
@@ -198,17 +204,19 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     if (!user || !db) return;
     if (tasks.some(t => t.categoryId === categoryId)) {
       toast({ title: "Cannot Delete Category", description: "Please reassign tasks from this category before deleting it.", variant: "destructive" });
+      addNotification({ message: 'Cannot Delete Category', description: 'Reassign tasks first.', type: 'error' });
       playSound('error');
       return;
     }
     if (settings.categories.length <= 1) {
       toast({ title: "Cannot Delete Category", description: "You must have at least one category.", variant: "destructive" });
+      addNotification({ message: 'Cannot Delete Category', description: 'Must have at least one.', type: 'error' });
       playSound('error');
       return;
     }
     const newCategories = settings.categories.filter(c => c.id !== categoryId);
     await updateSettings({ categories: newCategories });
-  }, [user, tasks, settings.categories, toast, updateSettings, playSound]);
+  }, [user, tasks, settings.categories, toast, updateSettings, playSound, addNotification]);
 
   const importData = useCallback(async (dataString: string) => {
     if (!user || !db) return;
@@ -238,6 +246,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
         await batch.commit();
 
         toast({ title: "Success", description: "Data imported successfully." });
+        addNotification({ message: 'Data Imported', description: 'Your data has been restored from a backup.', type: 'success' });
         playSound('success');
       } else {
         throw new Error("Invalid data format.");
@@ -245,14 +254,16 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error(error);
       toast({ title: "Import Failed", description: "The provided file is not valid.", variant: "destructive" });
+      addNotification({ message: 'Import Failed', description: 'The backup file was not valid.', type: 'error' });
       playSound('error');
     }
-  }, [user, toast, tasks, playSound]);
+  }, [user, toast, tasks, playSound, addNotification]);
 
   const exportData = useCallback(() => {
+    addNotification({ message: 'Data Exported', description: 'A backup file has been downloaded.', type: 'success' });
     playSound('success');
     return JSON.stringify({ tasks, settings }, null, 2);
-  }, [tasks, settings, playSound]);
+  }, [tasks, settings, playSound, addNotification]);
 
   const categorizeTask = useCallback(async (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
@@ -263,29 +274,32 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
       if (result.success && result.swimlane) {
         await updateTask(taskId, { swimlane: result.swimlane });
         toast({ title: "AI Categorization", description: `Task moved to ${result.swimlane}.` });
+        addNotification({ message: 'AI Categorized Task', description: `Task moved to ${result.swimlane}.`, type: 'info' });
         playSound('success');
       } else {
         throw new Error(result.error);
       }
     } catch (error: any) {
       toast({ title: "AI Error", description: error.message, variant: "destructive" });
+      addNotification({ message: 'AI Error', description: error.message, type: 'error' });
       playSound('error');
     }
-  }, [tasks, updateTask, toast, playSound]);
+  }, [tasks, updateTask, toast, playSound, addNotification]);
 
     const clearDailyTasks = useCallback(async () => {
         if (!user || !db) return;
         const batch = writeBatch(db);
         tasks.forEach(t => {
-            if (t.isDaily) {
+            if (t.isDaily && t.status !== 'completed') {
                 const taskRef = doc(db, 'users', user.uid, 'tasks', t.id);
                 batch.update(taskRef, { isDaily: false });
             }
         });
         await batch.commit();
         toast({ title: 'Daily Board Cleared', description: 'All daily tasks moved back to the general pool.' });
+        addNotification({ message: 'Daily Board Cleared', description: 'Tasks moved back to the general pool.', type: 'info' });
         playSound('success');
-    }, [user, tasks, toast, playSound]);
+    }, [user, tasks, toast, playSound, addNotification]);
 
   return (
     <TaskContext.Provider value={{

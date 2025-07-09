@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -16,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BrainCircuit } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { GoogleIcon } from '@/components/auth/GoogleIcon';
+import { useNotification } from '@/hooks/use-notification';
 
 
 const signupSchema = z.object({
@@ -29,6 +31,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { addNotification } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -43,13 +46,16 @@ export default function SignupPage() {
         title: 'Account Created!',
         description: "Welcome to TaskFlow Zen. You're being redirected.",
       });
+      addNotification({ message: 'Welcome to TaskFlow Zen!', type: 'success'});
       router.push('/');
     } catch (error: any) {
+      const errorMessage = error.message || 'An unknown error occurred.';
       toast({
         title: 'Sign Up Failed',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
+      addNotification({ message: 'Sign Up Failed', description: errorMessage, type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -60,13 +66,20 @@ export default function SignupPage() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
+      toast({
+        title: 'Account Created!',
+        description: "Welcome to TaskFlow Zen. You're being redirected.",
+      });
+      addNotification({ message: 'Welcome to TaskFlow Zen!', type: 'success'});
       router.push('/');
     } catch (error: any) {
+      const errorMessage = error.message || 'An unknown error occurred.';
       toast({
         title: `Google Sign-Up Failed (${error.code})`,
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
+      addNotification({ message: 'Google Sign-Up Failed', description: errorMessage, type: 'error' });
     } finally {
       setIsLoading(false);
     }

@@ -1,3 +1,4 @@
+
 export type SwimlaneId = 'Morning' | 'Midday' | 'Evening';
 
 export const SWIMLANES: SwimlaneId[] = ['Morning', 'Midday', 'Evening'];
@@ -67,4 +68,15 @@ export interface Settings {
   tags: string[];
   timezones: { id: string; name: string }[];
   soundEnabled: boolean;
+}
+
+export type NotificationType = 'success' | 'error' | 'info';
+
+export interface Notification {
+    id: string;
+    message: string;
+    description?: string;
+    type: NotificationType;
+    read: boolean;
+    createdAt: string;
 }

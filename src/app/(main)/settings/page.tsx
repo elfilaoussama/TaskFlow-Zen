@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState } from 'react';
@@ -24,6 +23,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { useNotification } from '@/hooks/use-notification';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const categorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -118,12 +119,14 @@ export default function SettingsPage() {
   const { settings, updateSettings, deleteCategory, importData, exportData } = useTaskContext();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { addNotification } = useNotification();
   const playSound = useSound(settings.soundEnabled);
 
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | undefined>(undefined);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
 
+  const isPasswordProvider = user?.providerData.some(p => p.providerId === 'password');
 
   const handleWeightChange = (name: string, value: number[]) => {
     updateSettings({
@@ -191,8 +194,8 @@ export default function SettingsPage() {
   };
   
   const handlePasswordReset = async () => {
-      if (!user?.email) {
-          toast({ title: 'Error', description: 'No email address found for your account.', variant: 'destructive'});
+      if (!user?.email || !isPasswordProvider) {
+          toast({ title: 'Error', description: 'Password reset is only available for email/password accounts.', variant: 'destructive'});
           playSound('error');
           return;
       }
@@ -200,9 +203,11 @@ export default function SettingsPage() {
       try {
         await sendPasswordResetEmail(auth, user.email);
         toast({ title: 'Password Reset Email Sent', description: 'Check your inbox for instructions to reset your password.' });
+        addNotification({ message: 'Password Reset Email Sent', description: 'Check your inbox for instructions.', type: 'success'});
         playSound('success');
       } catch (error: any) {
         toast({ title: 'Error Sending Email', description: error.message, variant: 'destructive' });
+        addNotification({ message: 'Error sending password reset email', description: error.message, type: 'error'});
         playSound('error');
       } finally {
         setIsResettingPassword(false);
@@ -310,9 +315,22 @@ export default function SettingsPage() {
                   <CardDescription>Manage your account settings.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <Button onClick={handlePasswordReset} disabled={isResettingPassword}>
-                    {isResettingPassword ? 'Sending...' : 'Send Password Reset Email'}
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span tabIndex={0}>
+                                <Button onClick={handlePasswordReset} disabled={isResettingPassword || !isPasswordProvider}>
+                                    {isResettingPassword ? 'Sending...' : 'Send Password Reset Email'}
+                                </Button>
+                            </span>
+                        </TooltipTrigger>
+                        {!isPasswordProvider && (
+                             <TooltipContent>
+                                <p>Password reset is not available for accounts created with Google.</p>
+                            </TooltipContent>
+                        )}
+                    </Tooltip>
+                  </TooltipProvider>
               </CardContent>
             </Card>
 

@@ -61,7 +61,7 @@ export function OnboardingGuide() {
     }
 
     return (
-        <Dialog open={showOnboarding} onOpenChange={(open) => !open && handleFinish()}>
+        <Dialog open={showOnboarding}>
             <DialogContent className="sm:max-w-[650px]">
                 <Carousel setApi={setApi} className="w-full">
                     <CarouselContent>
@@ -104,4 +104,3 @@ export function OnboardingGuide() {
         </Dialog>
     );
 }
-

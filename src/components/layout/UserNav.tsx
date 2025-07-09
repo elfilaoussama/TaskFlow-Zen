@@ -21,6 +21,7 @@ import { auth } from "@/lib/firebase";
 import { LogOut, Settings } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 import { useRouter } from "next/navigation";
+import { NotificationBell } from "./NotificationBell";
 
 export function UserNav() {
   const { user } = useAuth();
@@ -69,8 +70,9 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <div className="group-data-[collapsible=icon]:hidden">
-        <ThemeToggle />
+      <div className="flex items-center gap-1 group-data-[collapsible=icon]:flex-col">
+         <NotificationBell />
+         <ThemeToggle />
       </div>
     </div>
   )

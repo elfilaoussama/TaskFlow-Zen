@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -16,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { BrainCircuit } from 'lucide-react';
 import { GoogleIcon } from '@/components/auth/GoogleIcon';
+import { useNotification } from '@/hooks/use-notification';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -27,6 +29,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { addNotification } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -38,11 +41,13 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       router.push('/');
     } catch (error: any) {
+      const errorMessage = error.message || 'An unknown error occurred.';
       toast({
         title: 'Login Failed',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
+      addNotification({ message: 'Login Failed', description: errorMessage, type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -55,11 +60,13 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider);
       router.push('/');
     } catch (error: any) {
+      const errorMessage = error.message || 'An unknown error occurred.';
       toast({
         title: `Google Sign-In Failed (${error.code})`,
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       });
+      addNotification({ message: 'Google Sign-In Failed', description: errorMessage, type: 'error' });
     } finally {
       setIsLoading(false);
     }
