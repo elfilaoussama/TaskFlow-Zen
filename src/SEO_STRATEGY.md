@@ -1,6 +1,7 @@
-# TaskFlow Zen - SEO Strategy
 
-This document outlines the Search Engine Optimization (SEO) strategy for the TaskFlow Zen application. The goal is to maximize organic visibility, attract relevant traffic from search engines like Google and Bing, and increase user acquisition.
+# Tassko - SEO Strategy
+
+This document outlines the Search Engine Optimization (SEO) strategy for the Tassko application. The goal is to maximize organic visibility, attract relevant traffic from search engines like Google and Bing, and increase user acquisition.
 
 ## 1. Target Audience
 

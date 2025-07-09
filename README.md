@@ -1,3 +1,4 @@
+
 # Tassko: A Dynamic Kanban Board
 
 Welcome to Tassko, a modern, AI-powered task management application built with Next.js, Firebase, and Genkit. Tassko provides a dynamic Kanban-style interface to help you organize your daily tasks, prioritize your work, and analyze your productivity.

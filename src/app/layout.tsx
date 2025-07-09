@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { TasskoLogo } from '@/components/TasskoLogo';
 
-const APP_NAME = "TaskFlow Zen";
+const APP_NAME = "Tassko";
 const APP_DESCRIPTION = "The intelligent Kanban board and task manager designed to bring clarity and focus to your day. Leverage AI to automatically categorize tasks and analyze your productivity.";
 
 export const metadata: Metadata = {
@@ -16,14 +16,14 @@ export const metadata: Metadata = {
   },
   description: APP_DESCRIPTION,
   applicationName: APP_NAME,
-  keywords: ["Kanban board", "task management", "AI productivity", "daily planner", "to-do list", "Next.js", "TaskFlow Zen"],
-  authors: [{ name: "The Tassko Team", url: 'https://taskflow.zen' }],
+  keywords: ["Kanban board", "task management", "AI productivity", "daily planner", "to-do list", "Next.js", "Tassko"],
+  authors: [{ name: "The Tassko Team", url: 'https://tassko.app' }],
   creator: "The Tassko Team",
   publisher: "The Tassko Team",
-  metadataBase: new URL('https://taskflow.zen'),
+  metadataBase: new URL('https://tassko.app'),
   openGraph: {
     type: "website",
-    url: "https://taskflow.zen",
+    url: "https://tassko.app",
     title: `${APP_NAME} | AI-Powered Kanban & Task Manager`,
     description: APP_DESCRIPTION,
     siteName: APP_NAME,
@@ -66,7 +66,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            "name": "TaskFlow Zen",
+            "name": "Tassko",
             "operatingSystem": "WEB",
             "applicationCategory": "ProductivityApplication",
             "aggregateRating": {

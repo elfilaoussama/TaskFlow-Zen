@@ -1,8 +1,9 @@
+
 import { MetadataRoute } from 'next'
  
 export default function sitemap(): MetadataRoute.Sitemap {
   // For a real app, you'd fetch this from a CMS or database
-  const baseUrl = 'https://taskflow.zen';
+  const baseUrl = 'https://tassko.app';
 
   return [
     {
