@@ -201,10 +201,7 @@ export default function SettingsPage() {
       }
       setIsResettingPassword(true);
       try {
-        await sendPasswordResetEmail(auth, user.email, {
-          url: `${window.location.origin}/login`,
-        });
-        auth.languageCode = auth.languageCode || 'en';
+        await sendPasswordResetEmail(auth, user.email);
         toast({ title: 'Password Reset Email Sent', description: 'Check your inbox for instructions to reset your password.' });
         addNotification({ message: 'Password Reset Email Sent', description: 'Check your inbox for instructions.', type: 'success'});
         playSound('success');
