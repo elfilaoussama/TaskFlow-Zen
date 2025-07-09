@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {isLoading ? (
          <div className="flex items-center justify-center h-screen w-screen bg-background">
             <div className="flex flex-col items-center gap-4">
-                <TasskoLogo className="h-16 w-16 text-primary animate-pulse" />
+                <TasskoLogo className="h-16 w-16 animate-pulse" />
                 <p className="text-muted-foreground">Loading your workspace...</p>
             </div>
          </div>

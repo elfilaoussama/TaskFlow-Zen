@@ -75,7 +75,7 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
-        <TasskoLogo className="mx-auto h-12 w-12 text-primary" />
+        <TasskoLogo className="mx-auto h-12 w-12" />
         <CardTitle className="text-2xl">Welcome Back to Tassko</CardTitle>
         <CardDescription>Sign in to continue to your workspace.</CardDescription>
       </CardHeader>

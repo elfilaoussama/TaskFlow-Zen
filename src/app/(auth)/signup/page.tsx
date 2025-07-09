@@ -88,7 +88,7 @@ export default function SignupPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
-        <TasskoLogo className="mx-auto h-12 w-12 text-primary" />
+        <TasskoLogo className="mx-auto h-12 w-12" />
         <CardTitle className="text-2xl">Create a Tassko Account</CardTitle>
         <CardDescription>Start managing your tasks with ease.</CardDescription>
       </CardHeader>

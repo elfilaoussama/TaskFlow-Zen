@@ -29,7 +29,7 @@ export default function MainLayout({
     return (
        <div className="flex h-screen w-screen items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4">
-              <TasskoLogo className="h-16 w-16 text-primary animate-pulse" />
+              <TasskoLogo className="h-16 w-16 animate-pulse" />
               <p className="text-muted-foreground">Verifying session...</p>
           </div>
        </div>
