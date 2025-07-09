@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, sendEmailVerification, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,6 @@ export default function SignupPage() {
   const { toast } = useToast();
   const { addNotification } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
-  const [isVerificationSent, setIsVerificationSent] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
   });
@@ -43,9 +42,7 @@ export default function SignupPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       await updateProfile(userCredential.user, { displayName: data.name });
-      await sendEmailVerification(userCredential.user);
-      await signOut(auth); // Sign out to force email verification
-      setIsVerificationSent(true);
+      router.push('/');
     } catch (error: any) {
       const errorMessage = error.message || 'An unknown error occurred.';
       toast({
@@ -64,7 +61,6 @@ export default function SignupPage() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      // Google sign-in implicitly verifies email, so we can redirect
       router.push('/');
     } catch (error: any) {
       const errorMessage = error.message || 'An unknown error occurred.';
@@ -77,25 +73,6 @@ export default function SignupPage() {
     } finally {
       setIsLoading(false);
     }
-  }
-  
-  if (isVerificationSent) {
-    return (
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <TasskoLogo className="mx-auto h-12 w-12" />
-          <CardTitle className="text-2xl">Check Your Email</CardTitle>
-          <CardDescription>
-            We've sent a verification link to your email address. Please click the link to activate your account, then you can log in.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href="/login" className="w-full">
-            <Button className="w-full">Back to Login</Button>
-          </Link>
-        </CardContent>
-      </Card>
-    )
   }
 
   return (
