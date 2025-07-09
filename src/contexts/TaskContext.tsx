@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -8,6 +9,7 @@ import { getTaskCategory } from '@/app/actions';
 import { useAuth } from './AuthContext';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
 import { collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc, writeBatch, query } from 'firebase/firestore';
+import { useSound } from '@/hooks/use-sound';
 
 interface TaskContextType {
   tasks: Task[];
@@ -49,6 +51,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const playSound = useSound();
 
   useEffect(() => {
     if (user && isFirebaseConfigured && db) {
@@ -102,28 +105,43 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
       },
     };
 
-    const dataToSend = { ...newTask };
-    // Firestore does not allow 'undefined' values.
+    const dataToSend: any = { ...newTask };
     if (dataToSend.duration === undefined) {
-      delete (dataToSend as { duration?: number }).duration;
+      delete dataToSend.duration;
+    }
+    if (dataToSend.completedAt === undefined) {
+      delete dataToSend.completedAt;
+    }
+    if (dataToSend.attachments === undefined) {
+      delete dataToSend.attachments;
     }
 
     await addDoc(collection(db, 'users', user.uid, 'tasks'), dataToSend);
     toast({ title: "Task Created", description: `"${newTask.title}" has been added.` });
-  }, [user, toast]);
+    playSound('success');
+  }, [user, toast, playSound]);
   
   const updateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
     if (!user || !db) return;
     const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
 
-    const updatesToSend = { ...updates };
-    // Firestore does not allow 'undefined' values.
+    const updatesToSend: any = { ...updates };
     if (updatesToSend.duration === undefined) {
-        delete updatesToSend.duration;
+      delete updatesToSend.duration;
+    }
+     if (updatesToSend.completedAt === undefined) {
+      delete updatesToSend.completedAt;
     }
     
     await updateDoc(taskRef, updatesToSend);
-  }, [user]);
+    if(updates.status === 'completed') {
+        toast({ title: "Task Completed!"});
+        playSound('success');
+    }
+    if(updates.status === 'todo') {
+        playSound('success');
+    }
+  }, [user, playSound, toast]);
 
   const deleteTask = useCallback(async (taskId: string) => {
     if (!user || !db) return;
@@ -132,13 +150,15 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     await deleteDoc(taskRef);
     if (taskToDelete) {
       toast({ title: "Task Deleted", description: `"${taskToDelete.title}" has been removed.`, variant: 'destructive' });
+      playSound('error');
     }
-  }, [user, tasks, toast]);
+  }, [user, tasks, toast, playSound]);
 
   const moveTask = useCallback(async (taskId: string, newSwimlane: SwimlaneId) => {
     if (!user || !db) return;
     await updateTask(taskId, { swimlane: newSwimlane });
-  }, [user, updateTask]);
+    playSound('drag'); // Using 'drag' sound for drop
+  }, [user, updateTask, playSound]);
   
   const moveFromGeneralToDaily = useCallback(async (taskId: string) => {
     if (!user || !db) return;
@@ -149,8 +169,9 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
         title: 'Task Added to Daily Board',
         description: `"${task.title}" is now on your daily plan.`,
       });
+      playSound('success');
     }
-  }, [user, tasks, toast, updateTask]);
+  }, [user, tasks, toast, updateTask, playSound]);
 
   const updateSettings = useCallback(async (newSettings: Partial<Settings>) => {
     if (!user || !db) return;
@@ -158,7 +179,8 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     const userSettingsRef = doc(db, 'users', user.uid);
     await setDoc(userSettingsRef, { settings: newFullSettings }, { merge: true });
     toast({ title: "Settings Updated" });
-  }, [user, settings, toast]);
+    playSound('success');
+  }, [user, settings, toast, playSound]);
   
   const addCategory = useCallback(async (category: Omit<Category, 'id'>) => {
     if (!user || !db) return;
@@ -176,15 +198,17 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     if (!user || !db) return;
     if (tasks.some(t => t.categoryId === categoryId)) {
       toast({ title: "Cannot Delete Category", description: "Please reassign tasks from this category before deleting it.", variant: "destructive" });
+      playSound('error');
       return;
     }
     if (settings.categories.length <= 1) {
       toast({ title: "Cannot Delete Category", description: "You must have at least one category.", variant: "destructive" });
+      playSound('error');
       return;
     }
     const newCategories = settings.categories.filter(c => c.id !== categoryId);
     await updateSettings({ categories: newCategories });
-  }, [user, tasks, settings.categories, toast, updateSettings]);
+  }, [user, tasks, settings.categories, toast, updateSettings, playSound]);
 
   const importData = useCallback(async (dataString: string) => {
     if (!user || !db) return;
@@ -214,18 +238,21 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
         await batch.commit();
 
         toast({ title: "Success", description: "Data imported successfully." });
+        playSound('success');
       } else {
         throw new Error("Invalid data format.");
       }
     } catch (error) {
       console.error(error);
       toast({ title: "Import Failed", description: "The provided file is not valid.", variant: "destructive" });
+      playSound('error');
     }
-  }, [user, toast, tasks]);
+  }, [user, toast, tasks, playSound]);
 
   const exportData = useCallback(() => {
+    playSound('success');
     return JSON.stringify({ tasks, settings }, null, 2);
-  }, [tasks, settings]);
+  }, [tasks, settings, playSound]);
 
   const categorizeTask = useCallback(async (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
@@ -236,13 +263,15 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
       if (result.success && result.swimlane) {
         await updateTask(taskId, { swimlane: result.swimlane });
         toast({ title: "AI Categorization", description: `Task moved to ${result.swimlane}.` });
+        playSound('success');
       } else {
         throw new Error(result.error);
       }
     } catch (error: any) {
       toast({ title: "AI Error", description: error.message, variant: "destructive" });
+      playSound('error');
     }
-  }, [tasks, updateTask, toast]);
+  }, [tasks, updateTask, toast, playSound]);
 
     const clearDailyTasks = useCallback(async () => {
         if (!user || !db) return;
@@ -250,16 +279,13 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
         tasks.forEach(t => {
             if (t.isDaily) {
                 const taskRef = doc(db, 'users', user.uid, 'tasks', t.id);
-                if (t.status === 'completed') {
-                    batch.update(taskRef, { isDaily: false });
-                } else {
-                    batch.update(taskRef, { isDaily: false, swimlane: 'Morning' });
-                }
+                batch.update(taskRef, { isDaily: false });
             }
         });
         await batch.commit();
         toast({ title: 'Daily Board Cleared', description: 'All daily tasks moved back to the general pool.' });
-    }, [user, tasks, toast]);
+        playSound('success');
+    }, [user, tasks, toast, playSound]);
 
   return (
     <TaskContext.Provider value={{

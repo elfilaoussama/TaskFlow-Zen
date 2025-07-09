@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Badge } from '@/components/ui/badge';
@@ -5,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTaskContext } from '@/contexts/TaskContext';
 import { useSound } from '@/hooks/use-sound';
-import { Task } from '@/lib/types';
+import { Attachment, Task } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { Bot, Calendar, CheckCircle2, Clock, GripVertical, Paperclip, PlusCircle, Star, Undo2 } from 'lucide-react';
 import React, { useMemo, useState, useEffect } from 'react';
 import { AddTaskDialog } from './AddTaskDialog';
 import { calculatePriorityScore } from '@/lib/priority';
+import { AttachmentViewerModal } from './AttachmentViewerModal';
 
 interface TaskCardProps {
   task: Task;
@@ -24,6 +26,8 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
   const [isCategorizing, setIsCategorizing] = useState(false);
   const playSound = useSound();
   const [isClient, setIsClient] = useState(false);
+  const [isAttachmentViewerOpen, setIsAttachmentViewerOpen] = useState(false);
+  const [selectedAttachment, setSelectedAttachment] = useState<Attachment | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -45,12 +49,10 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
 
   const handleComplete = () => {
     updateTask(task.id, { status: 'completed', completedAt: new Date().toISOString() });
-    playSound('complete');
   };
   
   const handleRevert = () => {
     updateTask(task.id, { status: 'todo', completedAt: undefined });
-    playSound('add');
   };
 
   const handleAiCategorize = async () => {
@@ -64,13 +66,23 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
     setIsEditDialogOpen(true);
   }
 
+  const openAttachment = (e: React.MouseEvent, attachment: Attachment) => {
+      e.stopPropagation();
+      if (attachment.type === 'file') {
+        setSelectedAttachment(attachment);
+        setIsAttachmentViewerOpen(true);
+      } else {
+          window.open(attachment.url, '_blank', 'noopener,noreferrer');
+      }
+  }
+
   return (
     <>
       <Card
         draggable={boardType === 'daily'}
         onDragStart={handleDragStart}
         className={cn(
-            "mb-2 bg-card/80 backdrop-blur-sm shadow-md hover:shadow-lg hover:bg-card/90 transition-all duration-200 border-l-4",
+            "mb-2 bg-card/80 backdrop-blur-sm shadow-md hover:shadow-lg hover:bg-card/90 transition-all duration-200 border-l-4 cursor-pointer",
             task.status === 'completed' ? 'opacity-60' : '',
             boardType === 'daily' && 'cursor-grab active:cursor-grabbing'
         )}
@@ -97,7 +109,7 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
                     </div>
                 )}
                 {task.attachments && task.attachments.length > 0 && (
-                    <div className="flex items-center gap-1.5" title={`${task.attachments.length} attachments`}>
+                     <div className="flex items-center gap-1.5" title={`${task.attachments.length} attachments`} onClick={(e) => openAttachment(e, task.attachments![0])}>
                         <Paperclip className="h-3 w-3" />
                         <span>{task.attachments.length}</span>
                     </div>
@@ -114,7 +126,7 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
           </div>
           <div className="flex items-center gap-1">
              {boardType === 'general' && task.status === 'todo' && (
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); moveFromGeneralToDaily(task.id); playSound('add'); }} title="Add to Daily Board">
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); moveFromGeneralToDaily(task.id); }} title="Add to Daily Board">
                 <PlusCircle className="h-4 w-4 text-primary" />
               </Button>
             )}
@@ -142,6 +154,13 @@ export function TaskCard({ task, boardType }: TaskCardProps) {
         setIsOpen={setIsEditDialogOpen}
         taskToEdit={task}
       />
+      {selectedAttachment && (
+        <AttachmentViewerModal
+            isOpen={isAttachmentViewerOpen}
+            setIsOpen={setIsAttachmentViewerOpen}
+            attachment={selectedAttachment}
+        />
+      )}
     </>
   );
 }

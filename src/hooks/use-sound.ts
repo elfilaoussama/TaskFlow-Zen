@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useCallback, useEffect, useState } from 'react';
 import * as Tone from 'tone';
 import { useTaskContext } from '@/contexts/TaskContext';
 
-type SoundType = 'drag' | 'drop' | 'complete' | 'add' | 'delete';
+type SoundType = 'drag' | 'drop' | 'complete' | 'add' | 'delete' | 'success' | 'error';
 
 export function useSound() {
   const { settings } = useTaskContext();
@@ -37,12 +38,13 @@ export function useSound() {
             oscillator: { type: 'sine' },
           }).toDestination().triggerAttackRelease('C3', '8n');
           break;
+        case 'success':
         case 'complete':
            const completeSynth = new Tone.PolySynth(Tone.Synth, {
             oscillator: { type: "fmsine" },
             envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.4 },
            }).toDestination();
-           completeSynth.triggerAttackRelease(["C4", "E4", "G4"], "8n");
+           completeSynth.triggerAttackRelease(["C5", "E5", "G5"], "8n");
           break;
         case 'add':
           const addSynth = new Tone.Synth({
@@ -51,12 +53,13 @@ export function useSound() {
           }).toDestination();
           addSynth.triggerAttackRelease('C5', '16n');
           break;
+        case 'error':
         case 'delete':
-           const deleteSynth = new Tone.Synth({
-             oscillator: { type: 'fmsquare' },
-             envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 },
+           const deleteSynth = new Tone.NoiseSynth({
+             noise: { type: 'pink' },
+             envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.1 },
            }).toDestination();
-           deleteSynth.triggerAttackRelease("A2", "16n");
+           deleteSynth.triggerAttackRelease("8n");
           break;
       }
     } catch (error) {

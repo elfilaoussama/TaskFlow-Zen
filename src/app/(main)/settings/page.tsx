@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState } from 'react';
+import React, AwaitedReactNode, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,6 +19,10 @@ import { HexColorPicker } from 'react-colorful';
 import { Category, SwimlaneId, SWIMLANES } from '@/lib/types';
 import { PlusCircle, Trash2, Edit, Upload, Download } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/contexts/AuthContext';
+import { auth } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 const categorySchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -110,9 +115,14 @@ const CategoryDialog = ({
 
 export default function SettingsPage() {
   const { settings, updateSettings, deleteCategory, importData, exportData } = useTaskContext();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const playSound = useSound();
+
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [categoryToEdit, setCategoryToEdit] = useState<Category | undefined>(undefined);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+
 
   const handleWeightChange = (name: string, value: number[]) => {
     updateSettings({
@@ -122,7 +132,7 @@ export default function SettingsPage() {
 
   const handleSoundToggle = (enabled: boolean) => {
     updateSettings({ soundEnabled: enabled });
-    if(enabled) playSound('add');
+    if(enabled) playSound('success');
   };
 
   const handleAddNewCategory = () => {
@@ -177,6 +187,25 @@ export default function SettingsPage() {
       }
     };
     input.click();
+  };
+  
+  const handlePasswordReset = async () => {
+      if (!user?.email) {
+          toast({ title: 'Error', description: 'No email address found for your account.', variant: 'destructive'});
+          playSound('error');
+          return;
+      }
+      setIsResettingPassword(true);
+      try {
+        await sendPasswordResetEmail(auth, user.email);
+        toast({ title: 'Password Reset Email Sent', description: 'Check your inbox for instructions to reset your password.' });
+        playSound('success');
+      } catch (error: any) {
+        toast({ title: 'Error Sending Email', description: error.message, variant: 'destructive' });
+        playSound('error');
+      } finally {
+        setIsResettingPassword(false);
+      }
   };
 
   return (
@@ -272,6 +301,20 @@ export default function SettingsPage() {
                 </CardContent>
             </Card>
             
+            <Separator />
+
+            <Card>
+              <CardHeader>
+                  <CardTitle>Account Management</CardTitle>
+                  <CardDescription>Manage your account settings.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <Button onClick={handlePasswordReset} disabled={isResettingPassword}>
+                    {isResettingPassword ? 'Sending...' : 'Send Password Reset Email'}
+                  </Button>
+              </CardContent>
+            </Card>
+
             <Separator />
 
             <Card>

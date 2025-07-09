@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -60,14 +61,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <SidebarMenuButton isActive={pathname === '/analytics'} tooltip="Analytics">
                   <BarChart2 />
                   Analytics
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <Link href="/settings">
-                <SidebarMenuButton isActive={pathname === '/settings'} tooltip="Settings">
-                  <Settings />
-                  Settings
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>

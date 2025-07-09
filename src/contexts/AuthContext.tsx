@@ -1,15 +1,20 @@
+
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, isFirebaseConfigured } from '@/lib/firebase';
+import { auth, isFirebaseConfigured, db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  showOnboarding: boolean;
+  setShowOnboarding: (show: boolean) => void;
+  updateOnboardingStatus: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,11 +48,21 @@ NEXT_PUBLIC_FIREBASE_APP_ID=...
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (isFirebaseConfigured && auth) {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
         setUser(user);
+        if (user && db) {
+            const userDocRef = doc(db, 'users', user.uid);
+            const docSnap = await getDoc(userDocRef);
+            if (!docSnap.exists() || !docSnap.data().hasCompletedOnboarding) {
+                setShowOnboarding(true);
+            }
+        } else {
+            setShowOnboarding(false);
+        }
         setIsLoading(false);
       });
       return () => unsubscribe();
@@ -55,12 +70,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
     }
   }, []);
+
+  const updateOnboardingStatus = async () => {
+    if (user && db) {
+      const userDocRef = doc(db, 'users', user.uid);
+      await setDoc(userDocRef, { hasCompletedOnboarding: true }, { merge: true });
+      setShowOnboarding(false);
+    }
+  };
   
   if (!isFirebaseConfigured) {
     return <FirebaseNotConfigured />;
   }
 
-  const value = { user, isLoading };
+  const value = { user, isLoading, showOnboarding, setShowOnboarding, updateOnboardingStatus };
 
   return (
     <AuthContext.Provider value={value}>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -17,16 +18,19 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
+import { useRouter } from "next/navigation";
 
 export function UserNav() {
   const { user } = useAuth();
+  const router = useRouter();
 
   if (!user) return <ThemeToggle />;
 
   const handleLogout = async () => {
     await signOut(auth);
+    router.push('/login');
   };
 
   const getInitials = (email: string) => {
@@ -53,6 +57,11 @@ export function UserNav() {
               </p>
             </div>
           </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => router.push('/settings')}>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />

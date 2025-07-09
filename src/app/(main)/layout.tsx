@@ -1,6 +1,8 @@
+
 "use client";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { OnboardingGuide } from "@/components/layout/OnboardingGuide";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -11,7 +13,7 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, showOnboarding } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function MainLayout({
     return (
        <div className="flex h-screen w-screen items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4">
-              <p className="text-xl font-semibold text-primary">Tassko</p>
+              <p className="text-xl font-semibold text-primary">TaskFlow Zen</p>
               <Skeleton className="h-12 w-12 rounded-full" />
               <p className="text-muted-foreground">Verifying session...</p>
           </div>
@@ -34,5 +36,10 @@ export default function MainLayout({
     );
   }
 
-  return <AppShell>{children}</AppShell>;
+  return (
+    <AppShell>
+      {children}
+      {showOnboarding && <OnboardingGuide />}
+    </AppShell>
+  );
 }

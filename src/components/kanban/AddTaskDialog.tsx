@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
@@ -34,6 +35,11 @@ import { useTaskContext } from '@/contexts/TaskContext';
 import { Task, Attachment } from '@/lib/types';
 import { useSound } from '@/hooks/use-sound';
 import { Slider } from '@/components/ui/slider';
+import { useToast } from '@/hooks/use-toast';
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+
 
 const attachmentSchema = z.union([
   z.object({
@@ -114,6 +120,7 @@ const AddLinkPopover = ({ onAddLink }: { onAddLink: (name: string, url: string) 
 export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogProps) {
   const { addTask, updateTask, deleteTask, settings } = useTaskContext();
   const playSound = useSound();
+  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<TaskFormValues>({
@@ -159,6 +166,17 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
     if (!files) return;
 
     Array.from(files).forEach(file => {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({ title: 'File Too Large', description: `File "${file.name}" exceeds the 2MB limit.`, variant: 'destructive'});
+        playSound('error');
+        return;
+      }
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        toast({ title: 'Invalid File Type', description: `File type for "${file.name}" is not supported.`, variant: 'destructive'});
+        playSound('error');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUri = e.target?.result as string;
@@ -180,7 +198,6 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
       updateTask(taskToEdit.id, taskData);
     } else {
       addTask(taskData);
-      playSound('add');
     }
     setIsOpen(false);
   };
@@ -188,7 +205,6 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
   const handleDelete = () => {
     if (taskToEdit) {
       deleteTask(taskToEdit.id);
-      playSound('delete');
       setIsOpen(false);
     }
   };
@@ -230,7 +246,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Estimated Duration (minutes)</FormLabel>
-                  <FormControl>
+                   <FormControl>
                     <Input
                       placeholder="e.g., 60"
                       type="text"
@@ -238,11 +254,13 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                       value={field.value ?? ''}
                       onChange={(e) => {
                         const value = e.target.value;
-                        const parsed = parseInt(value, 10);
                         if (value === '') {
                           field.onChange(undefined);
-                        } else if (!isNaN(parsed) && parsed >= 0) {
-                          field.onChange(parsed);
+                        } else {
+                          const parsed = parseInt(value, 10);
+                          if (!isNaN(parsed) && parsed >= 0) {
+                            field.onChange(parsed);
+                          }
                         }
                       }}
                       name={field.name}
@@ -308,7 +326,7 @@ export function AddTaskDialog({ isOpen, setIsOpen, taskToEdit }: AddTaskDialogPr
                 <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                     <Paperclip className="mr-2 h-4 w-4" /> Upload File
                 </Button>
-                <Input type="file" multiple ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                <Input type="file" multiple ref={fileInputRef} onChange={handleFileChange} className="hidden" accept={ALLOWED_FILE_TYPES.join(',')} />
               </div>
             </div>
 
