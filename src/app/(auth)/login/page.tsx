@@ -39,12 +39,25 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
+      // Check how the user is registered.
+      const methods = await fetchSignInMethodsForEmail(auth, data.email);
+      if (methods.includes('google.com')) {
+        toast({
+          title: 'Google Sign-In Recommended',
+          description: "This account was created with Google. Please use the 'Continue with Google' button.",
+          variant: 'destructive',
+        });
+        addNotification({ message: 'Use Google Sign-In', description: 'This account was created using Google.', type: 'error' });
+        setIsLoading(false);
+        return;
+      }
+
       await signInWithEmailAndPassword(auth, data.email, data.password);
       router.push('/');
     } catch (error: any) {
       let errorMessage = 'An unknown error occurred.';
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        errorMessage = 'Invalid email or password. Please try again.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password. Please try again or sign up.';
       } else {
         errorMessage = error.message;
       }
@@ -63,33 +76,48 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
+      // We use a popup to get the user's email first.
       const result = await signInWithPopup(auth, provider);
-      // After popup, check if the user is new. If so, it's an error for the login page.
+      
+      // Then, we check how that email is registered in Firebase.
       const methods = await fetchSignInMethodsForEmail(auth, result.user.email!);
       
-      // This case handles a user who just signed-in for the first time via the login page popup.
-      // We log them out and tell them to sign up first.
-      if (result.user.metadata.creationTime === result.user.metadata.lastSignInTime) {
-         await auth.signOut();
-         toast({
-            title: 'Sign Up Required',
-            description: "This Google account isn't registered yet. Please create an account first.",
-            variant: 'destructive',
-         });
-         addNotification({ message: 'Sign Up Required', description: "Please use the sign-up page.", type: 'error' });
-         router.push('/signup');
-         return;
+      // Case 1: The user signed up with Google before. Let them in.
+      if (methods.includes('google.com')) {
+          // This is a valid Google sign-in. The signInWithPopup already handled it.
+          router.push('/');
+          return;
+      }
+
+      // Case 2: An account exists with the same email but was created with a password.
+      if (methods.includes('password')) {
+        await auth.signOut(); // Log out the user from the incomplete Google session.
+        toast({
+          title: 'Sign-In Method Conflict',
+          description: "An account with this email was created with a password. Please sign in using your email and password.",
+          variant: 'destructive',
+        });
+        addNotification({ message: 'Sign-In Method Conflict', description: 'Please use your password to sign in.', type: 'error' });
+        return;
       }
       
-      router.push('/');
+      // Case 3: No account exists with this email.
+      // This can happen if a user clicks Google login for the first time on the login page.
+      if (methods.length === 0) {
+        await auth.signOut(); // Log out the user from the incomplete Google session.
+        toast({
+          title: 'Account Not Found',
+          description: "No account found with this Google account. Please sign up first.",
+          variant: 'destructive',
+        });
+        addNotification({ message: 'Account Not Found', description: 'Please navigate to the sign-up page.', type: 'error' });
+        router.push('/signup');
+        return;
+      }
+      
     } catch (error: any) {
       let title = 'Google Sign-In Failed';
       let description = error.message || 'An unknown error occurred.';
-
-      if (error.code === 'auth/account-exists-with-different-credential') {
-        title = 'Login Method Conflict';
-        description = "An account already exists with this email. Please sign in with your password.";
-      }
 
       toast({
         title: title,

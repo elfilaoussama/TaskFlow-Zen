@@ -23,7 +23,7 @@ import { TasskoLogo } from '@/components/TasskoLogo';
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -51,6 +51,7 @@ export default function SignupPage() {
         });
         addNotification({ message: 'Account Exists', description: 'Please log in instead.', type: 'error' });
         setIsLoading(false);
+        router.push('/login');
         return;
       }
       
@@ -73,6 +74,11 @@ export default function SignupPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+        // This ensures the user is prompted to select a Google account every time.
+        prompt: 'select_account'
+    });
+
     try {
       await signInWithPopup(auth, provider);
       router.push('/');
@@ -80,9 +86,11 @@ export default function SignupPage() {
       let title = `Google Sign-Up Failed`;
       let description = error.message || 'An unknown error occurred.';
 
+      // This is a critical check. If a user tries to sign up with Google but already has an
+      // account with that email (created via email/password), we must stop them.
       if (error.code === 'auth/account-exists-with-different-credential') {
         title = 'Account Exists';
-        description = "An account with this email already exists with a different sign-in method. Please sign in with your original method.";
+        description = "An account with this email already exists with a password. Please sign in using your email and password on the login page.";
       }
       
       toast({
