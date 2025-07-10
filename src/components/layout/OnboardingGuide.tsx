@@ -93,7 +93,7 @@ export function OnboardingGuide() {
                             <CarouselItem key={index}>
                                 <div className="p-1 pt-8">
                                     <div className="flex flex-col items-center justify-center space-y-4 text-center p-6">
-                                        <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+                                        <div className="relative w-full h-[40vh] max-h-[300px] rounded-lg overflow-hidden">
                                             <Image 
                                                 src={step.image} 
                                                 alt={step.title} 
