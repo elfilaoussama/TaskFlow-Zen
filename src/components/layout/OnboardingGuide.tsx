@@ -70,11 +70,13 @@ export function OnboardingGuide() {
   const minSwipeDistance = 50;
 
   useEffect(() => {
+    // Only set isOpen to true if the global state says to show it.
+    // This prevents it from re-opening if the user closes it manually.
     if (showOnboarding) {
       setIsOpen(true);
     }
   }, [showOnboarding]);
-
+  
   const handleNext = useCallback(() => {
     api?.scrollNext();
   }, [api]);
@@ -130,17 +132,15 @@ export function OnboardingGuide() {
   const allStepsViewed = viewedSteps.size === onboardingSteps.length;
   const isLastStep = currentStep === onboardingSteps.length - 1;
 
-  if (!isOpen) {
-    return null;
-  }
-
+  // The Dialog's open state is now controlled by the local `isOpen` state.
+  // `onOpenChange` will be called by the Dialog when the user clicks the close button or the overlay.
   return (
     <Dialog
       open={isOpen}
       onOpenChange={setIsOpen}
     >
       <DialogContent
-        className="w-full max-w-4xl max-h-[95vh] sm:max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col"
+        className="w-full max-w-4xl max-h-[95vh] sm:max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
       >
         <DialogHeader>
           <DialogTitle className="sr-only">Application Onboarding Guide</DialogTitle>
