@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail, sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,6 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
-      // Check if email already exists
       const methods = await fetchSignInMethodsForEmail(auth, data.email);
       if (methods.length > 0) {
         toast({
@@ -50,14 +49,23 @@ export default function SignupPage() {
           variant: 'destructive',
         });
         addNotification({ message: 'Account Exists', description: 'Please log in instead.', type: 'error' });
-        setIsLoading(false);
         router.push('/login');
         return;
       }
       
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       await updateProfile(userCredential.user, { displayName: data.name });
-      router.push('/');
+      await sendEmailVerification(userCredential.user);
+      
+      toast({
+          title: 'Verification Email Sent',
+          description: 'Please check your inbox to verify your email address.'
+      });
+      addNotification({ message: 'Verification Email Sent', description: 'Check your inbox to continue.', type: 'info' });
+
+      // Redirect to a dedicated verification page
+      router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
+
     } catch (error: any) {
       const errorMessage = error.message || 'An unknown error occurred.';
       toast({
@@ -75,22 +83,20 @@ export default function SignupPage() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({
-        // This ensures the user is prompted to select a Google account every time.
         prompt: 'select_account'
     });
 
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      // For Google Sign-Up, the email is automatically verified.
       router.push('/');
     } catch (error: any) {
       let title = `Google Sign-Up Failed`;
       let description = error.message || 'An unknown error occurred.';
 
-      // This is a critical check. If a user tries to sign up with Google but already has an
-      // account with that email (created via email/password), we must stop them.
       if (error.code === 'auth/account-exists-with-different-credential') {
         title = 'Account Exists';
-        description = "An account with this email already exists with a password. Please sign in using your email and password on the login page.";
+        description = "An account with this email already exists. Please sign in using your email and password on the login page.";
       }
       
       toast({

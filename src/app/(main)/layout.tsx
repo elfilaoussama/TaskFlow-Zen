@@ -18,19 +18,38 @@ export default function MainLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (isLoading) return;
+
+    if (!user) {
       router.push('/login');
+      return;
+    }
+
+    const isEmailUser = user.providerData.some(p => p.providerId === 'password');
+    if (isEmailUser && !user.emailVerified) {
+        router.push(`/verify-email?email=${encodeURIComponent(user.email!)}`);
     }
   }, [user, isLoading, router]);
 
   if (isLoading || !user) {
-    // This loading state is shown while auth state is being checked.
-    // The main app loader is in AuthProvider for the initial load.
     return (
        <div className="flex h-screen w-screen items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4">
               <TasskoLogo className="h-16 w-16 animate-pulse" />
               <p className="text-muted-foreground">Verifying session...</p>
+          </div>
+       </div>
+    );
+  }
+
+  // Final check to prevent flicker for unverified users
+  const isEmailUser = user.providerData.some(p => p.providerId === 'password');
+  if (isEmailUser && !user.emailVerified) {
+     return (
+       <div className="flex h-screen w-screen items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-4">
+              <TasskoLogo className="h-16 w-16 animate-pulse" />
+              <p className="text-muted-foreground">Redirecting to verification...</p>
           </div>
        </div>
     );
