@@ -7,6 +7,8 @@ import {
   Dialog,
   DialogContent,
   DialogClose,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -136,6 +138,9 @@ export function OnboardingGuide() {
       <DialogContent
         className="w-full max-w-4xl max-h-[95vh] sm:max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col"
       >
+        <DialogHeader>
+            <DialogTitle className="sr-only">Application Onboarding Guide</DialogTitle>
+        </DialogHeader>
         <DialogClose asChild>
           <Button
             variant="ghost"
