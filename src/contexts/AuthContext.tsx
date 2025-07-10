@@ -1,7 +1,7 @@
 
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, isFirebaseConfigured, db } from '@/lib/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -13,7 +13,6 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   showOnboarding: boolean;
-  setShowOnboarding: (show: boolean) => void;
   updateOnboardingStatus: () => Promise<void>;
 }
 
@@ -56,11 +55,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(user);
         if (user && db) {
             const userDocRef = doc(db, 'users', user.uid);
-            const docSnap = await getDoc(userDocRef);
-            if (!docSnap.exists() || !docSnap.data().hasCompletedOnboarding) {
-                setShowOnboarding(true);
+            try {
+                const docSnap = await getDoc(userDocRef);
+                if (!docSnap.exists() || !docSnap.data().hasCompletedOnboarding) {
+                    setShowOnboarding(true);
+                } else {
+                    setShowOnboarding(false);
+                }
+            } catch (error) {
+                console.error("Error checking onboarding status:", error);
+                // Default to not showing onboarding on error to avoid blocking the user.
+                setShowOnboarding(false);
             }
         } else {
+            // No user logged in, so don't show the guide.
             setShowOnboarding(false);
         }
         setIsLoading(false);
@@ -71,19 +79,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const updateOnboardingStatus = async () => {
+  const updateOnboardingStatus = useCallback(async () => {
     if (user && db) {
-      const userDocRef = doc(db, 'users', user.uid);
-      await setDoc(userDocRef, { hasCompletedOnboarding: true }, { merge: true });
-      setShowOnboarding(false);
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        // Set the flag in Firestore to persist completion status.
+        await setDoc(userDocRef, { hasCompletedOnboarding: true }, { merge: true });
+        // Update local state to immediately hide the modal.
+        setShowOnboarding(false);
+      } catch (error) {
+        console.error("Failed to update onboarding status:", error);
+      }
     }
-  };
+  }, [user]);
   
   if (!isFirebaseConfigured) {
     return <FirebaseNotConfigured />;
   }
 
-  const value = { user, isLoading, showOnboarding, setShowOnboarding, updateOnboardingStatus };
+  // The value now only provides the necessary state and the update function.
+  // The logic to show/hide is handled within the provider.
+  const value = { user, isLoading, showOnboarding, updateOnboardingStatus };
 
   return (
     <AuthContext.Provider value={value}>

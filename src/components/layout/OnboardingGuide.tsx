@@ -51,19 +51,36 @@ export function OnboardingGuide() {
     React.useEffect(() => {
         if (!api) return;
         setCount(api.scrollSnapList().length);
-        setCurrent(api.selectedScrollSnap() + 1);
+        setCurrent(api.selectedScrollSnap());
         api.on("select", () => {
-            setCurrent(api.selectedScrollSnap() + 1);
+            setCurrent(api.selectedScrollSnap());
         });
     }, [api]);
 
     const handleFinish = () => {
+        // This will set hasCompletedOnboarding to true in Firestore
+        // and update the local state to close the dialog.
         updateOnboardingStatus();
+    }
+    
+    // We only render the dialog if showOnboarding is true
+    if (!showOnboarding) {
+        return null;
     }
 
     return (
-        <Dialog open={showOnboarding} onOpenChange={(open) => !open && handleFinish()}>
-            <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden">
+        <Dialog open={showOnboarding} onOpenChange={(open) => {
+             // Closing the dialog via "X" or clicking outside
+             // should not mark it as complete. The state is handled
+             // by AuthProvider, so we don't need to do anything here.
+             // We only prevent marking as complete.
+             if (!open) {
+                // The context will still control the `showOnboarding` prop,
+                // so we don't need `setShowOnboarding(false)`.
+                // This handler is just to intercept the close event.
+             }
+        }}>
+            <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden" onPointerDownOutside={(e) => e.preventDefault()}>
                 <DialogClose asChild>
                     <Button variant="ghost" size="icon" className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full">
                         <X className="h-4 w-4" />
@@ -94,19 +111,22 @@ export function OnboardingGuide() {
                             </CarouselItem>
                         ))}
                     </CarouselContent>
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-                        <CarouselPrevious className="static -translate-y-0" />
-                        <CarouselNext className="static -translate-y-0" />
+                    {/* Make nav buttons easier to tap on mobile by placing them inside */}
+                    <div className="absolute bottom-6 left-6">
+                       <CarouselPrevious className="static -translate-y-0" />
+                    </div>
+                     <div className="absolute bottom-6 right-6">
+                       <CarouselNext className="static -translate-y-0" />
                     </div>
                 </Carousel>
                 <DialogFooter className="flex-row justify-between items-center w-full p-6 bg-muted/50">
                     <div className="text-sm text-muted-foreground">
-                        Step {current} of {count}
+                       Step {current + 1} of {count}
                     </div>
-                    {current === count ? (
+                    {current === count - 1 ? (
                          <Button onClick={handleFinish}>Get Started</Button>
                     ) : (
-                        <Button onClick={() => api?.scrollNext()}>Next</Button>
+                        <Button variant="ghost" className="invisible">Next</Button> // Placeholder to keep alignment
                     )}
                 </DialogFooter>
             </DialogContent>
