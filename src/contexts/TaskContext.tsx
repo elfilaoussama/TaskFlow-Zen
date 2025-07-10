@@ -119,7 +119,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
 
     await addDoc(collection(db, 'users', user.uid, 'tasks'), dataToSend);
     toast({ title: "Task Created", description: `"${newTask.title}" has been added.` });
-    addNotification({ message: 'Task Created', description: `"${newTask.title}" has been added.`, type: 'success' });
+    addNotification({ message: 'Task Created', description: `"${newTask.title}" was added.`, type: 'success' });
     playSound('success');
   }, [user, toast, playSound, addNotification]);
   

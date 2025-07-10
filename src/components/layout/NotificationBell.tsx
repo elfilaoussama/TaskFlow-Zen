@@ -22,7 +22,7 @@ const NOTIFICATION_ICONS = {
 }
 
 export function NotificationBell() {
-  const { notifications, unreadCount, markAllAsRead, clearAllNotifications } = useNotification();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAllNotifications, deleteNotification } = useNotification();
 
   return (
     <Popover>
@@ -30,8 +30,11 @@ export function NotificationBell() {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <div className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground">
-              {unreadCount > 9 ? '9+' : unreadCount}
+            <div className="absolute top-1 right-1 flex h-2 w-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+              </span>
             </div>
           )}
           <span className="sr-only">Toggle notifications</span>
@@ -57,14 +60,28 @@ export function NotificationBell() {
                  <div className="flex flex-col">
                     {notifications.map((n, index) => (
                         <React.Fragment key={n.id}>
-                            <div className={cn("p-4 flex items-start gap-4 hover:bg-accent/50", !n.read && "bg-primary/10")}>
-                                <div className="mt-1">{NOTIFICATION_ICONS[n.type]}</div>
+                            <div className={cn(
+                                "p-4 flex items-start gap-4 group hover:bg-accent/50 transition-colors", 
+                                n.read && "opacity-70"
+                            )}>
+                                {!n.read && <div className="mt-1.5 h-2 w-2 rounded-full bg-blue-500"></div>}
+                                <div className={cn("mt-1", n.read && "ml-4")}>{NOTIFICATION_ICONS[n.type]}</div>
                                 <div className="flex-1">
-                                   <p className="font-semibold text-sm leading-tight">{n.message}</p>
+                                   <p className={cn("font-semibold text-sm leading-tight", !n.read && "font-bold")}>{n.message}</p>
                                    {n.description && <p className="text-xs text-muted-foreground mt-0.5">{n.description}</p>}
                                    <p className="text-xs text-muted-foreground mt-1.5">
                                         {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                                    </p>
+                                </div>
+                                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {!n.read && (
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => markAsRead(n.id)} title="Mark as read">
+                                            <CheckCircle className="h-4 w-4 text-green-500" />
+                                        </Button>
+                                    )}
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteNotification(n.id)} title="Delete notification">
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
                                 </div>
                             </div>
                             {index < notifications.length - 1 && <Separator />}

@@ -3,10 +3,11 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from '@/components/ui/carousel';
 import { useAuth } from '@/contexts/AuthContext';
+import { X } from 'lucide-react';
 
 const onboardingSteps = [
     {
@@ -61,14 +62,20 @@ export function OnboardingGuide() {
     }
 
     return (
-        <Dialog open={showOnboarding}>
-            <DialogContent className="sm:max-w-[650px]">
+        <Dialog open={showOnboarding} onOpenChange={(open) => !open && handleFinish()}>
+            <DialogContent className="sm:max-w-[650px] p-0 overflow-hidden">
+                <DialogClose asChild>
+                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full">
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Close</span>
+                    </Button>
+                </DialogClose>
                 <Carousel setApi={setApi} className="w-full">
                     <CarouselContent>
                         {onboardingSteps.map((step, index) => (
                             <CarouselItem key={index}>
-                                <div className="p-1">
-                                    <div className="flex flex-col items-center justify-center space-y-4 text-center">
+                                <div className="p-1 pt-8">
+                                    <div className="flex flex-col items-center justify-center space-y-4 text-center p-6">
                                         <div className="relative w-full aspect-video rounded-lg overflow-hidden">
                                             <Image 
                                                 src={step.image} 
@@ -87,10 +94,12 @@ export function OnboardingGuide() {
                             </CarouselItem>
                         ))}
                     </CarouselContent>
-                    <CarouselPrevious className="left-2" />
-                    <CarouselNext className="right-2" />
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
+                        <CarouselPrevious className="static -translate-y-0" />
+                        <CarouselNext className="static -translate-y-0" />
+                    </div>
                 </Carousel>
-                <DialogFooter className="flex-row justify-between items-center w-full">
+                <DialogFooter className="flex-row justify-between items-center w-full p-6 bg-muted/50">
                     <div className="text-sm text-muted-foreground">
                         Step {current} of {count}
                     </div>

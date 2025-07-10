@@ -229,7 +229,7 @@ export default function SettingsPage() {
                             <CardTitle>Categories</CardTitle>
                             <CardDescription>Manage your task categories.</CardDescription>
                         </div>
-                        <Button onClick={handleAddNewCategory}><PlusCircle /> Add New</Button>
+                        <Button onClick={handleAddNewCategory}><PlusCircle className="h-4 w-4" /> Add New</Button>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-2">

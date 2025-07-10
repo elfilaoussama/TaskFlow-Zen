@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -80,7 +81,7 @@ export function Dashboard() {
                               strokeWidth={2}
                           >
                           {chartData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                              <Cell key={`cell-${index}`} fill={entry.fill} className="hover:opacity-80 transition-opacity" />
                           ))}
                           </Pie>
                           <Tooltip

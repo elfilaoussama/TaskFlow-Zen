@@ -33,6 +33,7 @@ export default function SignupPage() {
   const { toast } = useToast();
   const { addNotification } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
   });
@@ -57,7 +58,7 @@ export default function SignupPage() {
   };
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
+    setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
@@ -71,7 +72,7 @@ export default function SignupPage() {
       });
       addNotification({ message: 'Google Sign-Up Failed', description: errorMessage, type: 'error' });
     } finally {
-      setIsLoading(false);
+      setIsGoogleLoading(false);
     }
   }
 
@@ -86,20 +87,20 @@ export default function SignupPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" type="text" placeholder="Your Name" {...register('name')} disabled={isLoading} />
+            <Input id="name" type="text" placeholder="Your Name" {...register('name')} disabled={isLoading || isGoogleLoading} />
             {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="m@example.com" {...register('email')} disabled={isLoading} />
+            <Input id="email" type="email" placeholder="m@example.com" {...register('email')} disabled={isLoading || isGoogleLoading} />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" {...register('password')} disabled={isLoading} />
+            <Input id="password" type="password" {...register('password')} disabled={isLoading || isGoogleLoading} />
             {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
             {isLoading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
@@ -107,9 +108,18 @@ export default function SignupPage() {
         <Separator className="my-6" />
 
         <div className="space-y-4">
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
-              <GoogleIcon className="mr-2 h-4 w-4" />
-              Sign up with Google
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+                {isGoogleLoading ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent border-current"></div>
+                    <span>Continuing...</span>
+                  </>
+                ) : (
+                  <>
+                    <GoogleIcon className="mr-2 h-4 w-4" />
+                    Continue with Google
+                  </>
+                )}
             </Button>
         </div>
 

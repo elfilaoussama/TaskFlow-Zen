@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Notification, NotificationType } from '@/lib/types';
+import { Notification } from '@/lib/types';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -12,6 +12,7 @@ interface NotificationContextType {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearAllNotifications: () => void;
+  deleteNotification: (id: string) => void;
 }
 
 export const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -26,7 +27,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       read: false,
       createdAt: new Date().toISOString(),
     };
-    setNotifications(prev => [newNotification, ...prev]);
+    setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep max 50 notifications
   }, []);
 
   const markAsRead = useCallback((id: string) => {
@@ -38,6 +39,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const markAllAsRead = useCallback(() => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   }, []);
+  
+  const deleteNotification = useCallback((id: string) => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
 
   const clearAllNotifications = useCallback(() => {
     setNotifications([]);
@@ -46,7 +51,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, addNotification, markAsRead, markAllAsRead, clearAllNotifications }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount, addNotification, markAsRead, markAllAsRead, clearAllNotifications, deleteNotification }}>
       {children}
     </NotificationContext.Provider>
   );
