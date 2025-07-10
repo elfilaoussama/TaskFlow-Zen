@@ -41,9 +41,15 @@ export const metadata: Metadata = {
     images: ["/tassko-og-image.png"],
   },
   icons: {
-    icon: "/tassko-glass.png",
-    shortcut: "/tassko-glass.png",
-    apple: "/tassko-glass.png",
+    icon: [
+        { url: '/tassko-glass.png' },
+        new URL('/tassko-glass.png', 'https://tassko.app')
+    ],
+    shortcut: ['/tassko-glass.png'],
+    apple: [
+        { url: '/tassko-glass.png' },
+        { url: '/tassko-glass.png', sizes: '180x180', type: 'image/png' }
+    ]
   },
 };
 
