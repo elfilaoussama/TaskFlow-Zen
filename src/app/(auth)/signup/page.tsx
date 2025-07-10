@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,19 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
+      // Check if email already exists
+      const methods = await fetchSignInMethodsForEmail(auth, data.email);
+      if (methods.length > 0) {
+        toast({
+          title: 'Account Exists',
+          description: 'An account with this email already exists. Please log in instead.',
+          variant: 'destructive',
+        });
+        addNotification({ message: 'Account Exists', description: 'Please log in instead.', type: 'error' });
+        setIsLoading(false);
+        return;
+      }
+      
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       await updateProfile(userCredential.user, { displayName: data.name });
       router.push('/');
@@ -64,13 +77,20 @@ export default function SignupPage() {
       await signInWithPopup(auth, provider);
       router.push('/');
     } catch (error: any) {
-      const errorMessage = error.message || 'An unknown error occurred.';
+      let title = `Google Sign-Up Failed`;
+      let description = error.message || 'An unknown error occurred.';
+
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        title = 'Account Exists';
+        description = "An account with this email already exists with a different sign-in method. Please sign in with your original method.";
+      }
+      
       toast({
-        title: `Google Sign-Up Failed (${error.code})`,
-        description: errorMessage,
+        title: title,
+        description: description,
         variant: 'destructive',
       });
-      addNotification({ message: 'Google Sign-Up Failed', description: errorMessage, type: 'error' });
+      addNotification({ message: title, description: description, type: 'error' });
     } finally {
       setIsGoogleLoading(false);
     }

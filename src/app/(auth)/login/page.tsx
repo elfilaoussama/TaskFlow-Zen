@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,12 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       router.push('/');
     } catch (error: any) {
-      const errorMessage = error.message || 'An unknown error occurred.';
+      let errorMessage = 'An unknown error occurred.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        errorMessage = 'Invalid email or password. Please try again.';
+      } else {
+        errorMessage = error.message;
+      }
       toast({
         title: 'Login Failed',
         description: errorMessage,
@@ -58,16 +63,40 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      // After popup, check if the user is new. If so, it's an error for the login page.
+      const methods = await fetchSignInMethodsForEmail(auth, result.user.email!);
+      
+      // This case handles a user who just signed-in for the first time via the login page popup.
+      // We log them out and tell them to sign up first.
+      if (result.user.metadata.creationTime === result.user.metadata.lastSignInTime) {
+         await auth.signOut();
+         toast({
+            title: 'Sign Up Required',
+            description: "This Google account isn't registered yet. Please create an account first.",
+            variant: 'destructive',
+         });
+         addNotification({ message: 'Sign Up Required', description: "Please use the sign-up page.", type: 'error' });
+         router.push('/signup');
+         return;
+      }
+      
       router.push('/');
     } catch (error: any) {
-      const errorMessage = error.message || 'An unknown error occurred.';
+      let title = 'Google Sign-In Failed';
+      let description = error.message || 'An unknown error occurred.';
+
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        title = 'Login Method Conflict';
+        description = "An account already exists with this email. Please sign in with your password.";
+      }
+
       toast({
-        title: `Google Sign-In Failed (${error.code})`,
-        description: errorMessage,
+        title: title,
+        description: description,
         variant: 'destructive',
       });
-      addNotification({ message: 'Google Sign-In Failed', description: errorMessage, type: 'error' });
+      addNotification({ message: title, description: description, type: 'error' });
     } finally {
       setIsGoogleLoading(false);
     }
