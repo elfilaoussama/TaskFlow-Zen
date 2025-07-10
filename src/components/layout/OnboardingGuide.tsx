@@ -30,7 +30,7 @@ const onboardingSteps = [
     },
     {
         image: "https://placehold.co/600x400.png",
-        hint: "priority settings",
+        hint: "AI prioritization",
         title: "Smart Prioritization",
         description: "Each task has a priority score based on its urgency, importance, and deadline. Use the AI helper on the daily board to automatically move tasks to the best swimlane!"
     },

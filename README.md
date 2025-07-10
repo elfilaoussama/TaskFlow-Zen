@@ -1,16 +1,16 @@
 
-# Tassko: A Dynamic Kanban Board
+# Tassko: Your AI-Powered Daily Planner & Kanban Productivity App
 
-Welcome to Tassko, a modern, AI-powered task management application built with Next.js, Firebase, and Genkit. Tassko provides a dynamic Kanban-style interface to help you organize your daily tasks, prioritize your work, and analyze your productivity.
+Welcome to Tassko, a modern, AI-powered task management application built with Next.js, Firebase, and Genkit. Tassko provides a dynamic, time-based Kanban interface to help you organize your day, boost productivity with AI prioritization, and analyze your progress.
 
 [**Explore the Codebase Structure &raquo;**](./src/README.md)
 
 ## Features
 
 -   **Dual-Board System:** Manage a general task pool and a focused daily Kanban board.
--   **AI-Powered Categorization:** Automatically categorize tasks into Morning, Midday, or Evening swimlanes using Genkit.
--   **Dynamic Prioritization:** Tasks are automatically scored based on urgency, importance, impact, and deadlines.
--   **Rich Task Details:** Add descriptions, deadlines, attachments (images/PDFs), and more.
+-   **AI Task Manager:** Automatically categorize tasks into Morning, Midday, or Evening swimlanes using our AI planner.
+-   **Dynamic Prioritization:** Tasks are automatically scored based on urgency, importance, impact, and deadlines to help you focus on what matters.
+-   **Rich Task Details:** Add descriptions, deadlines, attachments (images/PDFs), and more to your to-do list with AI.
 -   **Productivity Analytics:** Visualize your progress with charts and graphs.
 -   **Firebase Integration:** Secure authentication and real-time data persistence with Firestore.
 -   **Responsive Design:** Fully functional on both desktop and mobile devices.

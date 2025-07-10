@@ -7,16 +7,16 @@ import { cn } from '@/lib/utils';
 import { TasskoLogo } from '@/components/TasskoLogo';
 
 const APP_NAME = "Tassko";
-const APP_DESCRIPTION = "The intelligent Kanban board and task manager designed to bring clarity and focus to your day. Leverage AI to automatically categorize tasks and analyze your productivity.";
+const APP_DESCRIPTION = "Tassko is an AI Task Manager and Daily Planner designed to boost productivity. Use our Kanban productivity app to organize your day with smart, time-based task organization and AI prioritization.";
 
 export const metadata: Metadata = {
   title: {
-    default: `${APP_NAME} | AI-Powered Kanban & Task Manager`,
+    default: `${APP_NAME}: AI Task Manager & Daily Planner App`,
     template: `%s | ${APP_NAME}`,
   },
   description: APP_DESCRIPTION,
   applicationName: APP_NAME,
-  keywords: ["Kanban board", "task management", "AI productivity", "daily planner", "to-do list", "Next.js", "Tassko"],
+  keywords: ["AI Task Manager", "Daily Planner", "Kanban Productivity App", "Time-based Task Organizer", "To-Do List with AI", "AI Planner", "Smart Kanban Tool", "Tassko"],
   authors: [{ name: "The Tassko Team", url: 'https://tassko.app' }],
   creator: "The Tassko Team",
   publisher: "The Tassko Team",
@@ -24,19 +24,19 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "https://tassko.app",
-    title: `${APP_NAME} | AI-Powered Kanban & Task Manager`,
+    title: `${APP_NAME}: AI Task Manager & Daily Planner App`,
     description: APP_DESCRIPTION,
     siteName: APP_NAME,
     images: [{
-      url: "/tassko-og-image.png", // Assuming you'll add an OG image
+      url: "/tassko-og-image.png",
       width: 1200,
       height: 630,
-      alt: `The ${APP_NAME} logo on a dark background.`,
+      alt: `Tassko - The AI-Powered Kanban Productivity App`,
     }],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${APP_NAME} | AI-Powered Kanban & Task Manager`,
+    title: `${APP_NAME}: AI Task Manager & Daily Planner App`,
     description: APP_DESCRIPTION,
     images: ["/tassko-og-image.png"],
   },
@@ -67,6 +67,7 @@ export default function RootLayout({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
             "name": "Tassko",
+            "description": "An AI Task Manager and Daily Planner app to organize your day. Boost productivity with a smart Kanban board and AI-powered task prioritization.",
             "operatingSystem": "WEB",
             "applicationCategory": "ProductivityApplication",
             "aggregateRating": {
