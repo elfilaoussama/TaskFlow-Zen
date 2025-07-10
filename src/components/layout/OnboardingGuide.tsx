@@ -61,12 +61,19 @@ const onboardingSteps = [
 
 export function OnboardingGuide() {
   const { showOnboarding, updateOnboardingStatus } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
   const [api, setApi] = useState<CarouselApi>();
   const [currentStep, setCurrentStep] = useState(0);
   const [viewedSteps, setViewedSteps] = useState(new Set([0]));
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const minSwipeDistance = 50;
+
+  useEffect(() => {
+    if (showOnboarding) {
+      setIsOpen(true);
+    }
+  }, [showOnboarding]);
 
   const handleNext = useCallback(() => {
     api?.scrollNext();
@@ -91,9 +98,9 @@ export function OnboardingGuide() {
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe) {
+    if (isLeftSwipe && currentStep < onboardingSteps.length - 1) {
       handleNext();
-    } else if (isRightSwipe) {
+    } else if (isRightSwipe && currentStep > 0) {
       handlePrevious();
     }
   };
@@ -117,40 +124,34 @@ export function OnboardingGuide() {
 
   const handleFinish = () => {
     updateOnboardingStatus();
+    setIsOpen(false);
   };
 
   const allStepsViewed = viewedSteps.size === onboardingSteps.length;
   const isLastStep = currentStep === onboardingSteps.length - 1;
 
-  if (!showOnboarding) {
+  if (!isOpen) {
     return null;
   }
 
   return (
     <Dialog
-      open={showOnboarding}
-      onOpenChange={(open) => {
-        if (!open) {
-          // Allow closing via Esc or overlay click without finishing
-        }
-      }}
+      open={isOpen}
+      onOpenChange={setIsOpen}
     >
       <DialogContent
         className="w-full max-w-4xl max-h-[95vh] sm:max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col"
       >
         <DialogHeader>
-            <DialogTitle className="sr-only">Application Onboarding Guide</DialogTitle>
-        </DialogHeader>
-        <DialogClose asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 z-20 h-8 w-8 rounded-full bg-black/30 hover:bg-black/50 text-white"
+          <DialogTitle className="sr-only">Application Onboarding Guide</DialogTitle>
+          <DialogClose
+            className="absolute top-2 right-2 z-20 h-8 w-8 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
-          </Button>
-        </DialogClose>
+          </DialogClose>
+        </DialogHeader>
+
         <div
           className="flex-1 flex flex-col lg:flex-row min-h-0"
           onTouchStart={onTouchStart}
@@ -194,7 +195,10 @@ export function OnboardingGuide() {
               {onboardingSteps.map((_, index) => (
                 <button
                   key={index}
-                  onClick={() => api?.scrollTo(index)}
+                  onClick={() => {
+                    api?.scrollTo(index);
+                    setViewedSteps(prev => new Set([...prev, index]));
+                  }}
                   className={cn(
                     "w-2 h-2 mx-1.5 rounded-full transition-all duration-300",
                     index === currentStep
