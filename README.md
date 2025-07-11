@@ -69,53 +69,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Deployment
 
-This application is configured for deployment using [Firebase App Hosting](https://firebase.google.com/docs/app-hosting), a fully-managed, serverless hosting service for web applications.
-
-### To Deploy Your App:
+This application is configured for easy deployment using [Firebase App Hosting](https://firebase.google.com/docs/app-hosting), a fully-managed, serverless hosting service for web applications.
 
 1.  **Connect to GitHub:** Go to the Firebase App Hosting section of your Firebase console.
-2.  **Create a Backend:** Click "Create backend" and follow the prompts to connect your GitHub repository.
-3.  **Automatic Deployments:** Once connected, App Hosting will automatically build and deploy your application.
-    -   Every `push` to the `main` branch will update your live site.
-    -   Every pull request will generate a temporary preview URL.
+2.  **Create a Backend:** Follow the prompts to connect your GitHub repository.
+3.  **Automatic Deployments:** Once connected, App Hosting will automatically build and deploy your application on every push to the `main` branch. It will also create temporary preview URLs for every pull request.
 
-The `apphosting.yaml` file in the root of the project contains the configuration for the App Hosting build. The existing `.github/workflows` files are for a legacy deployment method and are not used by App Hosting.
-
-## Customization
-
-### Email Templates
-
-To provide a professional user experience, you can customize the emails Firebase sends for actions like password resets.
-
-1.  Go to the **Firebase Console**.
-2.  Navigate to **Authentication** > **Templates**.
-3.  Select the **Password reset** template.
-4.  Click the pencil icon to edit it.
-5.  Customize the **Subject** and **Message**. You can use the following professional template:
-
-    **Subject:**
-    ```
-    Reset Your Tassko Password
-    ```
-
-    **Message:**
-    ```
-    Hi %DISPLAY_NAME%,
-
-    We received a request to reset the password for your Tassko account.
-
-    If you made this request, click the link below to reset your password:
-
-    %LINK%
-
-    If you didn’t request a password reset, please ignore this email. Your account will remain secure.
-
-    If you need help, feel free to reach out to our support team.
-
-    Thanks,
-    The Tassko Team
-    ```
-6.  Click **Save**.
+The `apphosting.yaml` file in the root of the project contains the configuration for the App Hosting build.
 
 ## Project Structure
 

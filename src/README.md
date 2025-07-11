@@ -1,6 +1,6 @@
 # Source Code (`src`)
 
-This directory is the heart of the Tassko application, containing all the source code. The structure is organized to separate concerns and make the codebase maintainable and scalable.
+This directory is the heart of the Tassko application, containing all the source code. The structure is organized by feature and concern to make the codebase maintainable and scalable.
 
 [**&laquo; Back to Root README**](../README.md)
 
@@ -17,7 +17,3 @@ This directory is the heart of the Tassko application, containing all the source
 -   [**`hooks/`**](./hooks): Contains custom React hooks that encapsulate reusable logic, such as `useSound` for audio feedback or `use-toast` for notifications.
 
 -   [**`lib/`**](./lib/README.md): A collection of library code, utility functions, type definitions, and the main Firebase configuration.
-
--   `globals.css`: The global stylesheet, which includes Tailwind CSS directives and theme variables for ShadCN.
-
--   `layout.tsx`: The root layout for the entire application.
