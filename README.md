@@ -1,4 +1,3 @@
-commit 
 # Tassko: Your AI-Powered Daily Planner & Kanban Productivity App
 
 Welcome to Tassko, a modern, AI-powered task management application built with Next.js, Firebase, and Genkit. Tassko provides a dynamic, time-based Kanban interface to help you organize your day, boost productivity with AI prioritization, and analyze your progress.
