@@ -56,11 +56,9 @@ export default function LoginPage() {
       
       router.push('/');
     } catch (error: any) {
-      let errorMessage = 'An unknown error occurred.';
+      let errorMessage = 'An unexpected error occurred. Please try again.';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         errorMessage = 'Invalid email or password. Please try again or sign up.';
-      } else {
-        errorMessage = error.message;
       }
       toast({
         title: 'Login Failed',
@@ -83,8 +81,7 @@ export default function LoginPage() {
       // Use a temporary popup to get the user's email without signing them in yet
       const tempResult = await signInWithPopup(auth, provider);
       const email = tempResult.user.email;
-      const user = tempResult.user;
-
+      
       if (!email) {
           throw new Error("Could not retrieve email from Google account.");
       }
@@ -128,7 +125,7 @@ export default function LoginPage() {
       
     } catch (error: any) {
         let title = 'Google Sign-In Failed';
-        let description = error.message || 'An unknown error occurred.';
+        let description = 'An unexpected error occurred. Please try again.';
 
         if (error.code === 'auth/popup-closed-by-user') {
             title = 'Sign-In Cancelled';

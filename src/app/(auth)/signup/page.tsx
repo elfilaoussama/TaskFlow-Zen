@@ -66,7 +66,7 @@ export default function SignupPage() {
       router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
 
     } catch (error: any) {
-      const errorMessage = error.message || 'An unknown error occurred.';
+      const errorMessage = 'An unexpected error occurred during sign-up. Please try again.';
       toast({
         title: 'Sign Up Failed',
         description: errorMessage,
@@ -113,7 +113,7 @@ export default function SignupPage() {
       }
       
       // Email is new, now we can safely perform the sign-up.
-      const result = await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, provider);
       
       // The AuthProvider will handle checking for onboarding status.
       // The user is already logged in.
@@ -121,7 +121,7 @@ export default function SignupPage() {
 
     } catch (error: any) {
         let title = `Google Sign-Up Failed`;
-        let description = error.message || 'An unknown error occurred.';
+        let description = 'An unexpected error occurred. Please try again.';
 
         if (error.code === 'auth/popup-closed-by-user') {
             title = 'Sign-Up Cancelled';
