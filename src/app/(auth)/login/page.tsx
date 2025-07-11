@@ -32,7 +32,7 @@ export default function LoginPage() {
   const { addNotification } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
+  const { register, handleSubmit, formState: { errors }, setValue, setFocus } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
 
@@ -42,6 +42,7 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       
       if (!userCredential.user.emailVerified) {
+        // This handles users who exist but haven't verified their email.
         await auth.signOut();
         router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
         toast({
@@ -79,35 +80,23 @@ export default function LoginPage() {
         prompt: 'select_account'
     });
     try {
-      const result = await signInWithPopup(auth, provider);
-      const email = result.user.email;
-      
+      // Use a temporary popup to get the user's email without signing them in yet
+      const tempResult = await signInWithPopup(auth, provider);
+      const email = tempResult.user.email;
+      const user = tempResult.user;
+
       if (!email) {
           throw new Error("Could not retrieve email from Google account.");
       }
+      
+      // IMPORTANT: Sign out the temporary user immediately
+      await auth.signOut();
 
+      // Now, check the methods associated with the email
       const methods = await fetchSignInMethodsForEmail(auth, email);
       
-      if (methods.includes('password')) {
-        await auth.signOut();
-        toast({
-          title: 'Account Exists',
-          description: "An account with this email was created with a password. Please sign in using your email and password.",
-          variant: 'destructive',
-        });
-        addNotification({ message: 'Account Exists', description: 'Please use your password to sign in.', type: 'error' });
-        return;
-      }
-
-      // This logic path assumes the user *exists*.
-      // If the Google sign-in creates a new user, it means no account was found.
-      const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
-
-      if (isNewUser && methods.length === 0) {
-        // A new user was created by the popup, which means they don't have an account.
-        // This is a "sign-in" flow, so we deny them access.
-        await result.user.delete(); // Clean up the stub user.
-        await auth.signOut();
+      if (methods.length === 0) {
+        // No account exists for this email
         toast({
           title: 'Account Not Found',
           description: 'No account found with this Google account. Please sign up first.',
@@ -115,11 +104,27 @@ export default function LoginPage() {
         });
         addNotification({ message: 'Account Not Found', description: 'Please sign up first.', type: 'error' });
         router.push('/signup');
-        return
+        return;
       }
 
-      // If methods include 'google.com', it's a returning Google user.
-       router.push('/');
+      if (methods.includes('password')) {
+        // Account exists with a password. Guide user to log in with password.
+        toast({
+          title: 'Account Exists with Password',
+          description: "This email is registered with a password. Please sign in below.",
+          variant: 'destructive',
+        });
+        addNotification({ message: 'Account Exists', description: 'Please use your password to sign in.', type: 'error' });
+        setValue('email', email);
+        setFocus('password');
+        return;
+      }
+
+      if (methods.includes('google.com')) {
+        // Correct method, now perform the actual sign-in.
+        await signInWithPopup(auth, provider);
+        router.push('/');
+      }
       
     } catch (error: any) {
         let title = 'Google Sign-In Failed';

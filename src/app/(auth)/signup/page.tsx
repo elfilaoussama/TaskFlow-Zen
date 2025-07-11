@@ -86,19 +86,22 @@ export default function SignupPage() {
     });
 
     try {
-      const result = await signInWithPopup(auth, provider);
-      const email = result.user.email;
+      // Use a temporary popup to get the user's email without signing them in yet
+      const tempResult = await signInWithPopup(auth, provider);
+      const email = tempResult.user.email;
 
       if (!email) {
           throw new Error("Could not retrieve email from Google account.");
       }
       
-      // Check if this is a new user created by the popup
-      const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+      // IMPORTANT: Sign out the temporary user immediately
+      await auth.signOut();
 
-      if (!isNewUser) {
-          // This is an existing user. Since this is a signup flow, we deny them.
-          await auth.signOut();
+      // Now, check if an account already exists with this email.
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+
+      if (methods.length > 0) {
+          // Account already exists.
           toast({
               title: 'Account Exists',
               description: "An account with this email already exists. Please sign in.",
@@ -109,7 +112,9 @@ export default function SignupPage() {
           return;
       }
       
-      // This is a genuinely new user, created by the popup.
+      // Email is new, now we can safely perform the sign-up.
+      const result = await signInWithPopup(auth, provider);
+      
       // The AuthProvider will handle checking for onboarding status.
       // The user is already logged in.
       router.push('/');
