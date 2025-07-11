@@ -97,7 +97,10 @@ export default function SignupPage() {
       router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
 
     } catch (error: any) {
-      const errorMessage = 'An unexpected error occurred during sign-up. Please try again.';
+      let errorMessage = 'An unexpected error occurred during sign-up. Please try again.';
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'An account with this email already exists. Please sign in instead.';
+      }
       toast({
         title: 'Sign Up Failed',
         description: errorMessage,
@@ -120,8 +123,6 @@ export default function SignupPage() {
       // Use a temporary popup to get the user's email without signing them in yet
       const tempResult = await signInWithPopup(auth, provider);
       const email = tempResult.user.email;
-      const userId = tempResult.user.uid;
-      const displayName = tempResult.user.displayName;
 
       if (!email) {
           throw new Error("Could not retrieve email from Google account.");
