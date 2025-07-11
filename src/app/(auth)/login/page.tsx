@@ -77,38 +77,55 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      const methods = await fetchSignInMethodsForEmail(auth, result.user.email!);
+      const email = result.user.email;
+      
+      if (!email) {
+          throw new Error("Could not retrieve email from Google account.");
+      }
+
+      const methods = await fetchSignInMethodsForEmail(auth, email);
       
       if (methods.includes('password')) {
         await auth.signOut();
         toast({
-          title: 'Sign-In Method Conflict',
+          title: 'Account Exists',
           description: "An account with this email was created with a password. Please sign in using your email and password.",
           variant: 'destructive',
         });
-        addNotification({ message: 'Sign-In Method Conflict', description: 'Please use your password to sign in.', type: 'error' });
+        addNotification({ message: 'Account Exists', description: 'Please use your password to sign in.', type: 'error' });
         return;
       }
 
-      router.push('/');
+      // If methods include 'google.com', it's a returning Google user.
+      if (methods.includes('google.com')) {
+         router.push('/');
+      } else {
+        // This case should ideally not be hit if signup flow is correct, but as a safeguard:
+        await auth.signOut();
+        toast({
+          title: 'Account Not Found',
+          description: 'No account found with this Google account. Please sign up first.',
+          variant: 'destructive',
+        });
+        addNotification({ message: 'Account Not Found', description: 'Please sign up first.', type: 'error' });
+        router.push('/signup');
+      }
       
     } catch (error: any) {
-      let title = 'Google Sign-In Failed';
-      let description = error.message || 'An unknown error occurred.';
+        let title = 'Google Sign-In Failed';
+        let description = error.message || 'An unknown error occurred.';
 
-      // Handle cases where a new user tries to log in via Google
-      if (error.code === 'auth/user-not-found') {
-          title = 'Account Not Found';
-          description = "No account found with this Google account. Please sign up first.";
-          router.push('/signup');
-      }
-
-      toast({
-        title: title,
-        description: description,
-        variant: 'destructive',
-      });
-      addNotification({ message: title, description: description, type: 'error' });
+        if (error.code === 'auth/popup-closed-by-user') {
+            title = 'Sign-In Cancelled';
+            description = 'The sign-in window was closed before completion.';
+        }
+        
+        toast({
+            title: title,
+            description: description,
+            variant: 'destructive',
+        });
+        addNotification({ message: title, description: description, type: 'error' });
     } finally {
       setIsGoogleLoading(false);
     }

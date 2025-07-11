@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail, sendEmailVerification, getAdditionalUserInfo } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -88,23 +88,48 @@ export default function SignupPage() {
 
     try {
       const result = await signInWithPopup(auth, provider);
-      // For Google Sign-Up, the email is automatically verified.
-      router.push('/');
-    } catch (error: any) {
-      let title = `Google Sign-Up Failed`;
-      let description = error.message || 'An unknown error occurred.';
+      const email = result.user.email;
 
-      if (error.code === 'auth/account-exists-with-different-credential') {
-        title = 'Account Exists';
-        description = "An account with this email already exists. Please sign in using your email and password on the login page.";
+      if (!email) {
+          throw new Error("Could not retrieve email from Google account.");
+      }
+
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+
+      if (methods.length > 0 && !methods.includes('google.com')) {
+          // An account exists with the same email but is not a Google account.
+          await auth.signOut();
+          toast({
+              title: 'Account Exists',
+              description: "An account with this email already exists. Please sign in using your email and password.",
+              variant: 'destructive',
+          });
+          addNotification({ message: 'Account Exists', description: 'Please use your password to sign in.', type: 'error' });
+          return;
       }
       
-      toast({
-        title: title,
-        description: description,
-        variant: 'destructive',
-      });
-      addNotification({ message: title, description: description, type: 'error' });
+      // For both new and returning Google users, we can just push them to the app.
+      // The AuthProvider will handle showing the onboarding for new users.
+      router.push('/');
+
+    } catch (error: any) {
+        let title = `Google Sign-Up Failed`;
+        let description = error.message || 'An unknown error occurred.';
+
+        if (error.code === 'auth/popup-closed-by-user') {
+            title = 'Sign-Up Cancelled';
+            description = 'The sign-up window was closed before completion.';
+        } else if (error.code === 'auth/account-exists-with-different-credential') {
+            title = 'Account Conflict';
+            description = "An account with this email already exists with a different sign-in method. Please use the original method to sign in.";
+        }
+      
+        toast({
+            title: title,
+            description: description,
+            variant: 'destructive',
+        });
+        addNotification({ message: title, description: description, type: 'error' });
     } finally {
       setIsGoogleLoading(false);
     }
