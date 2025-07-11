@@ -7,8 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail, sendEmailVerification } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { GoogleIcon } from '@/components/auth/GoogleIcon';
 import { useNotification } from '@/hooks/use-notification';
 import { TasskoLogo } from '@/components/TasskoLogo';
+import { doc, setDoc } from 'firebase/firestore';
 
 
 const signupSchema = z.object({
@@ -27,6 +28,19 @@ const signupSchema = z.object({
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
+
+const generateVerificationCode = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+const sendVerificationEmail = async (email: string, code: string, name: string): Promise<void> => {
+  console.log(`Sending verification code to ${email} for ${name}.`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Verification Code: ${code}`);
+  }
+  // In a real app, you would have an API endpoint to send the email.
+  // For this project, we'll log it to the console.
+};
 
 export default function SignupPage() {
   const router = useRouter();
@@ -55,13 +69,30 @@ export default function SignupPage() {
       
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       await updateProfile(userCredential.user, { displayName: data.name });
-      await sendEmailVerification(userCredential.user);
+      
+      const verificationCode = generateVerificationCode();
+      const expirationTime = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+          uid: userCredential.user.uid,
+          email: data.email,
+          name: data.name,
+          emailVerified: false,
+          verificationCode: verificationCode,
+          verificationCodeExpires: expirationTime,
+          createdAt: new Date(),
+          authProvider: 'email',
+      });
+
+      await sendVerificationEmail(data.email, verificationCode, data.name);
+      
+      await auth.signOut();
       
       toast({
-          title: 'Verification Email Sent',
-          description: 'Please check your inbox to verify your email address.'
+          title: 'Account Created',
+          description: 'A verification code has been sent to your inbox.'
       });
-      addNotification({ message: 'Verification Email Sent', description: 'Check your inbox to continue.', type: 'info' });
+      addNotification({ message: 'Verification Code Sent', description: 'Check your inbox to continue.', type: 'info' });
 
       router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
 
@@ -89,6 +120,8 @@ export default function SignupPage() {
       // Use a temporary popup to get the user's email without signing them in yet
       const tempResult = await signInWithPopup(auth, provider);
       const email = tempResult.user.email;
+      const userId = tempResult.user.uid;
+      const displayName = tempResult.user.displayName;
 
       if (!email) {
           throw new Error("Could not retrieve email from Google account.");
@@ -113,9 +146,17 @@ export default function SignupPage() {
       }
       
       // Email is new, now we can safely perform the sign-up.
-      await signInWithPopup(auth, provider);
+      const finalResult = await signInWithPopup(auth, provider);
       
-      // The AuthProvider will handle checking for onboarding status.
+      await setDoc(doc(db, 'users', finalResult.user.uid), {
+          uid: finalResult.user.uid,
+          email: finalResult.user.email,
+          name: finalResult.user.displayName || 'Tassko User',
+          emailVerified: true, // Google accounts are considered verified
+          createdAt: new Date(),
+          authProvider: 'google',
+      });
+
       // The user is already logged in.
       router.push('/');
 

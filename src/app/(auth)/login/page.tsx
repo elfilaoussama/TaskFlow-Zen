@@ -8,7 +8,7 @@ import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { GoogleIcon } from '@/components/auth/GoogleIcon';
 import { useNotification } from '@/hooks/use-notification';
 import { TasskoLogo } from '@/components/TasskoLogo';
+import { doc, getDoc } from 'firebase/firestore';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -36,18 +37,29 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  const checkUserVerification = async (userId: string): Promise<boolean> => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      return userDoc.exists() && userDoc.data()?.emailVerified === true;
+    } catch (error) {
+      console.error('Error checking user verification:', error);
+      return false; // Fail safely
+    }
+  };
+
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       
-      if (!userCredential.user.emailVerified) {
-        // This handles users who exist but haven't verified their email.
-        await auth.signOut();
+      const isVerified = await checkUserVerification(userCredential.user.uid);
+      
+      if (!isVerified) {
+        await auth.signOut(); // Sign out user before redirecting
         router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
         toast({
           title: 'Email Not Verified',
-          description: 'Please check your email and verify your account before logging in.',
+          description: 'Please check your email and enter the verification code to continue.',
           variant: 'destructive',
         });
         addNotification({ message: 'Email Not Verified', description: 'Please verify your account first.', type: 'error' });

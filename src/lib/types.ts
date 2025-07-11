@@ -80,3 +80,15 @@ export interface Notification {
     read: boolean;
     createdAt: string;
 }
+
+export interface UserProfile {
+    uid: string;
+    email: string;
+    name: string;
+    emailVerified: boolean;
+    verificationCode?: string;
+    verificationCodeExpires?: Date;
+    createdAt: Date;
+    authProvider: 'email' | 'google';
+    verifiedAt?: Date;
+}
