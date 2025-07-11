@@ -63,7 +63,6 @@ export default function SignupPage() {
       });
       addNotification({ message: 'Verification Email Sent', description: 'Check your inbox to continue.', type: 'info' });
 
-      // Redirect to a dedicated verification page
       router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
 
     } catch (error: any) {
@@ -96,20 +95,26 @@ export default function SignupPage() {
 
       const methods = await fetchSignInMethodsForEmail(auth, email);
 
-      if (methods.length > 0 && !methods.includes('google.com')) {
-          // An account exists with the same email but is not a Google account.
+      if (methods.length > 0) {
+          const additionalInfo = getAdditionalUserInfo(result);
+          if (additionalInfo?.isNewUser) {
+            // This is a new user, but somehow an account with this email already exists.
+            // This can happen if they previously tried to sign up with the same email but with a password.
+             await result.user.delete(); // Delete the just-created anonymous user.
+          }
           await auth.signOut();
           toast({
               title: 'Account Exists',
-              description: "An account with this email already exists. Please sign in using your email and password.",
+              description: "An account with this email already exists. Please sign in using your original method.",
               variant: 'destructive',
           });
-          addNotification({ message: 'Account Exists', description: 'Please use your password to sign in.', type: 'error' });
+          addNotification({ message: 'Account Exists', description: 'Please use your original sign-in method.', type: 'error' });
+          router.push('/login');
           return;
       }
       
-      // For both new and returning Google users, we can just push them to the app.
-      // The AuthProvider will handle showing the onboarding for new users.
+      // This is a genuinely new user. The user is already created by signInWithPopup.
+      // The AuthProvider will handle checking for onboarding status.
       router.push('/');
 
     } catch (error: any) {
@@ -121,7 +126,7 @@ export default function SignupPage() {
             description = 'The sign-up window was closed before completion.';
         } else if (error.code === 'auth/account-exists-with-different-credential') {
             title = 'Account Conflict';
-            description = "An account with this email already exists with a different sign-in method. Please use the original method to sign in.";
+            description = "An account with this email already exists. Please use the original method to sign in.";
         }
       
         toast({

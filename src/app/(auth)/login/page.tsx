@@ -96,10 +96,7 @@ export default function LoginPage() {
         return;
       }
 
-      // If methods include 'google.com', it's a returning Google user.
-      if (methods.includes('google.com')) {
-         router.push('/');
-      } else {
+      if (methods.length === 0) {
         // This case should ideally not be hit if signup flow is correct, but as a safeguard:
         await auth.signOut();
         toast({
@@ -109,7 +106,11 @@ export default function LoginPage() {
         });
         addNotification({ message: 'Account Not Found', description: 'Please sign up first.', type: 'error' });
         router.push('/signup');
+        return
       }
+
+      // If methods include 'google.com', it's a returning Google user.
+       router.push('/');
       
     } catch (error: any) {
         let title = 'Google Sign-In Failed';
