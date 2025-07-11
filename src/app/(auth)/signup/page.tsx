@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail, sendEmailVerification, getAdditionalUserInfo } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, fetchSignInMethodsForEmail, sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -92,29 +92,26 @@ export default function SignupPage() {
       if (!email) {
           throw new Error("Could not retrieve email from Google account.");
       }
+      
+      // Check if this is a new user created by the popup
+      const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
 
-      const methods = await fetchSignInMethodsForEmail(auth, email);
-
-      if (methods.length > 0) {
-          const additionalInfo = getAdditionalUserInfo(result);
-          if (additionalInfo?.isNewUser) {
-            // This is a new user, but somehow an account with this email already exists.
-            // This can happen if they previously tried to sign up with the same email but with a password.
-             await result.user.delete(); // Delete the just-created anonymous user.
-          }
+      if (!isNewUser) {
+          // This is an existing user. Since this is a signup flow, we deny them.
           await auth.signOut();
           toast({
               title: 'Account Exists',
-              description: "An account with this email already exists. Please sign in using your original method.",
+              description: "An account with this email already exists. Please sign in.",
               variant: 'destructive',
           });
-          addNotification({ message: 'Account Exists', description: 'Please use your original sign-in method.', type: 'error' });
+          addNotification({ message: 'Account Exists', description: 'Please use the sign-in page.', type: 'error' });
           router.push('/login');
           return;
       }
       
-      // This is a genuinely new user. The user is already created by signInWithPopup.
+      // This is a genuinely new user, created by the popup.
       // The AuthProvider will handle checking for onboarding status.
+      // The user is already logged in.
       router.push('/');
 
     } catch (error: any) {
@@ -125,8 +122,8 @@ export default function SignupPage() {
             title = 'Sign-Up Cancelled';
             description = 'The sign-up window was closed before completion.';
         } else if (error.code === 'auth/account-exists-with-different-credential') {
-            title = 'Account Conflict';
-            description = "An account with this email already exists. Please use the original method to sign in.";
+             title = 'Account Exists';
+             description = "An account with this email already exists. Please sign in using your original method.";
         }
       
         toast({

@@ -75,6 +75,9 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+        prompt: 'select_account'
+    });
     try {
       const result = await signInWithPopup(auth, provider);
       const email = result.user.email;
@@ -96,8 +99,14 @@ export default function LoginPage() {
         return;
       }
 
-      if (methods.length === 0) {
-        // This case should ideally not be hit if signup flow is correct, but as a safeguard:
+      // This logic path assumes the user *exists*.
+      // If the Google sign-in creates a new user, it means no account was found.
+      const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+
+      if (isNewUser && methods.length === 0) {
+        // A new user was created by the popup, which means they don't have an account.
+        // This is a "sign-in" flow, so we deny them access.
+        await result.user.delete(); // Clean up the stub user.
         await auth.signOut();
         toast({
           title: 'Account Not Found',
